@@ -16,7 +16,7 @@
         private static void Main(string[] args)
         {
             DecompressYaz0File(@"D:\Pictures\Iggy.szs", @"D:\Pictures\Iggy.bfres");
-            //LoadBfresFile(@"D:\Pictures\Iggy.bfres");
+            LoadBfresFile(@"D:\Pictures\Iggy.bfres");
         }
 
         private static void LoadBfresFile(string fileName)
@@ -24,7 +24,7 @@
             BfresFile bfresFile;
             List<string> warnings;
 
-            // Load an example BFRES file.
+            // Load the given BFRES file.
             using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 bfresFile = new BfresFile();

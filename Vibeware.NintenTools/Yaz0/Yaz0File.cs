@@ -1,6 +1,5 @@
 ﻿namespace Vibeware.NintenTools.Yaz0
 {
-    using System;
     using System.IO;
     using System.IO.MemoryMappedFiles;
     using Vibeware.NintenTools.IO;
@@ -68,13 +67,11 @@
             // Open the input file again to start reading after the header.
             using (BinaryDataReader inputReader = new BinaryDataReader(
                 new FileStream(FileName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-            // Map the output file into memory and create two streams to read from and write to it.
+            // Map the output file into memory and create an accessor to quickly read from and write to it.
             using (MemoryMappedFile outputFile = MemoryMappedFile.CreateFromFile(fileName, FileMode.Create,
                 Path.GetFileName(fileName), DecompressedSize, MemoryMappedFileAccess.ReadWrite))
-            using (BinaryDataReader outputReader = new BinaryDataReader(
-                outputFile.CreateViewStream(0/*offset*/, 0/*size = all*/, MemoryMappedFileAccess.Read)))
-            using (BinaryDataWriter outputWriter = new BinaryDataWriter(
-                outputFile.CreateViewStream(0/*offset*/, 0/*size = all*/, MemoryMappedFileAccess.Write)))
+            using (UnmanagedMemoryAccessor outputAccessor = outputFile.CreateViewAccessor(0/*offset*/, 0/*size = all*/,
+                MemoryMappedFileAccess.ReadWrite))
             {
                 inputReader.ByteOrder = ByteOrder.BigEndian;
 
@@ -93,10 +90,9 @@
                         if ((groupConfig & (1 << i)) == (1 << i))
                         {
                             // Bit is set, copy 1 raw byte to the output.
-                            outputWriter.Write(inputReader.ReadByte());
-                            decompressedBytes++;
+                            outputAccessor.Write(decompressedBytes++, inputReader.ReadByte());
                         }
-                        else
+                        else if (decompressedBytes < DecompressedSize) /*doesn't make sense for last byte*/
                         {
                             // Bit is not set and data copying configuration follows, either 2 or 3 bytes long.
                             ushort dataBackSeekOffset = inputReader.ReadUInt16();
@@ -116,11 +112,10 @@
                                 dataBackSeekOffset &= 0x0FFF;
                             }
                             // Since bytes can be reread right after they were written, write and read bytes one by one.
-                            outputReader.Position = outputWriter.Position - dataBackSeekOffset - 1;
-                            while (dataSize-- > 0)
+                            long dataPosition = decompressedBytes - dataBackSeekOffset - 1;
+                            for (int j = 0; j < dataSize; j++)
                             {
-                                outputWriter.Write(outputReader.ReadByte());
-                                decompressedBytes++;
+                                outputAccessor.Write(decompressedBytes++, outputAccessor.ReadByte(dataPosition++));
                             }
                         }
                     }
