@@ -87,7 +87,7 @@
     <Compile Include="Maths\Vector3F.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Yaz0\Yaz0Exception.cs" />
-    <Compile Include="Yaz0\Yaz0Compression.cs" />
+    <Compile Include="Yaz0\Yaz0File.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

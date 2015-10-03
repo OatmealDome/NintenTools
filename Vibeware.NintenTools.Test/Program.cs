@@ -42,11 +42,8 @@
 
         private static void DecompressYaz0File(string inputFile, string outputFile)
         {
-            using (FileStream input = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
-            using (FileStream output = new FileStream(outputFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
-            {
-                Yaz0Compression.Decompress(input, output);
-            }
+            Yaz0File yaz0File = new Yaz0File(inputFile);
+            yaz0File.Decompress(outputFile);
         }
     }
 }
