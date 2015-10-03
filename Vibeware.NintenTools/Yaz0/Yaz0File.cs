@@ -92,13 +92,13 @@
                             // Bit is set, copy 1 raw byte to the output.
                             outputAccessor.Write(decompressedBytes++, inputReader.ReadByte());
                         }
-                        else if (decompressedBytes < DecompressedSize) /*doesn't make sense for last byte*/
+                        else if (decompressedBytes < DecompressedSize) // This does not make sense for last byte.
                         {
                             // Bit is not set and data copying configuration follows, either 2 or 3 bytes long.
                             ushort dataBackSeekOffset = inputReader.ReadUInt16();
                             int dataSize;
                             // If the nibble of the first back seek offset byte is 0, the config is 3 bytes long.
-                            byte nibble = (byte)(dataBackSeekOffset >> 12/*1 byte (8 bits) + 1 nibble (4 bits) */);
+                            byte nibble = (byte)(dataBackSeekOffset >> 12/*1 byte (8 bits) + 1 nibble (4 bits)*/);
                             if (nibble == 0)
                             {
                                 // Nibble is 0, the number of bytes to read is in third byte, which is (size + 0x12).

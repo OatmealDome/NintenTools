@@ -21,6 +21,8 @@
 
         private static void LoadBfresFile(string fileName)
         {
+            Console.Write("Loading \"{0}\"... ", fileName);
+
             BfresFile bfresFile;
             List<string> warnings;
 
@@ -40,10 +42,14 @@
             Console.ReadLine();
         }
 
-        private static void DecompressYaz0File(string inputFile, string outputFile)
+        private static void DecompressYaz0File(string inputFileName, string outputFileName)
         {
-            Yaz0File yaz0File = new Yaz0File(inputFile);
-            yaz0File.Decompress(outputFile);
+            Console.Write("Decompressing \"{0}\" to \"{1}\"... ", inputFileName, outputFileName);
+
+            Yaz0File yaz0File = new Yaz0File(inputFileName);
+            yaz0File.Decompress(outputFileName);
+
+            Console.WriteLine("successfully decompressed.");
         }
     }
 }

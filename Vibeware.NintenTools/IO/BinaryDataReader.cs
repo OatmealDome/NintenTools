@@ -95,6 +95,14 @@
         }
 
         /// <summary>
+        /// Gets the length in bytes of the stream in bytes. This is a shortcut to the base stream Length property.
+        /// </summary>
+        public long Length
+        {
+            get { return BaseStream.Length; }
+        }
+
+        /// <summary>
         /// Gets or sets the position within the current stream. This is a shortcut to the base stream Position
         /// property.
         /// </summary>
@@ -119,7 +127,7 @@
         /// specified binary format.
         /// </summary>
         /// <param name="format">The binary format, in which the <see cref="DateTime"/> will be read.</param>
-        /// <returns>The <see cref="DateTime"/> being read.</returns>
+        /// <returns>The <see cref="DateTime"/> read from the current stream.</returns>
         public DateTime ReadDateTime(BinaryDateTimeFormat format)
         {
             switch (format)
@@ -131,6 +139,11 @@
             }
         }
 
+        /// <summary>
+        /// Reads an 8-byte floating point value from the current stream and advances the current position of the stream
+        /// by eight bytes.
+        /// </summary>
+        /// <returns>The 8-byte floating point value read from the current stream.</returns>
         public override double ReadDouble()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -145,6 +158,11 @@
             }
         }
 
+        /// <summary>
+        /// Reads a 2-byte signed integer from the current stream and advances the current position of the stream by two
+        /// bytes.
+        /// </summary>
+        /// <returns>The 2-byte signed integer read from the current stream.</returns>
         public override short ReadInt16()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -165,8 +183,8 @@
         /// size of a single value.
         /// </summary>
         /// <param name="count">The number of <see cref="Int16"/> values to read.</param>
-        /// <returns>An <see cref="Int16"/> array containing data read from the underlying stream. This might be less
-        /// than the number of bytes requested if the end of the stream is reached.</returns>
+        /// <returns>The <see cref="Int16"/> array containing data read from the current stream. This might be less than
+        /// the number of bytes requested if the end of the stream is reached.</returns>
         public short[] ReadInt16s(int count)
         {
             short[] shorts = new short[count];
@@ -177,6 +195,11 @@
             return shorts;
         }
 
+        /// <summary>
+        /// Reads a 4-byte signed integer from the current stream and advances the current position of the stream by
+        /// four bytes.
+        /// </summary>
+        /// <returns>The 4-byte signed integer read from the current stream.</returns>
         public override int ReadInt32()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -197,8 +220,8 @@
         /// size of a single value.
         /// </summary>
         /// <param name="count">The number of <see cref="Int32"/> values to read.</param>
-        /// <returns>An <see cref="Int32"/> array containing data read from the underlying stream. This might be less
-        /// than the number of bytes requested if the end of the stream is reached.</returns>
+        /// <returns>The <see cref="Int32"/> array containing data read from the current stream. This might be less than
+        /// the number of bytes requested if the end of the stream is reached.</returns>
         public int[] ReadInt32s(int count)
         {
             int[] ints = new int[count];
@@ -209,6 +232,11 @@
             return ints;
         }
 
+        /// <summary>
+        /// Reads an 8-byte signed integer from the current stream and advances the current position of the stream by
+        /// eight bytes.
+        /// </summary>
+        /// <returns>The 8-byte signed integer read from the current stream.</returns>
         public override long ReadInt64()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -223,6 +251,11 @@
             }
         }
 
+        /// <summary>
+        /// Reads a 4-byte floating point value from the current stream and advances the current position of the stream
+        /// by four bytes.
+        /// </summary>
+        /// <returns>The 4-byte floating point value read from the current stream.</returns>
         public override float ReadSingle()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -243,7 +276,7 @@
         /// multiplied with the size of a single value.
         /// </summary>
         /// <param name="count">The number of <see cref="Single"/> values to read.</param>
-        /// <returns>An <see cref="Single"/> array containing data read from the underlying stream. This might be less
+        /// <returns>The <see cref="Single"/> array containing data read from the current stream. This might be less
         /// than the number of bytes requested if the end of the stream is reached.</returns>
         public float[] ReadSingles(int count)
         {
@@ -259,7 +292,7 @@
         /// Reads a string from the current stream. The string is available in the specified binary format.
         /// </summary>
         /// <param name="format">The binary format, in which the string will be read.</param>
-        /// <returns>The string being read.</returns>
+        /// <returns>The string read from the current stream.</returns>
         public string ReadString(BinaryStringFormat format)
         {
             return ReadString(format, Encoding);
@@ -270,7 +303,7 @@
         /// </summary>
         /// <param name="format">The binary format, in which the string will be read.</param>
         /// <param name="encoding">The encoding used for converting the string.</param>
-        /// <returns>The string being read.</returns>
+        /// <returns>The string read from the current stream.</returns>
         public string ReadString(BinaryStringFormat format, Encoding encoding)
         {
             switch (format)
@@ -296,7 +329,7 @@
         /// specified manually.
         /// </summary>
         /// <param name="length">The length of the string.</param>
-        /// <returns>The string being read.</returns>
+        /// <returns>The string read from the current stream.</returns>
         public string ReadString(int length)
         {
             return ReadString(length, Encoding);
@@ -308,12 +341,17 @@
         /// </summary>
         /// <param name="length">The length of the string.</param>
         /// <param name="encoding">The encoding to use for reading the string.</param>
-        /// <returns>The string being read.</returns>
+        /// <returns>The string read from the current stream.</returns>
         public string ReadString(int length, Encoding encoding)
         {
             return encoding.GetString(ReadBytes(length));
         }
 
+        /// <summary>
+        /// Reads a 2-byte unsigned integer from the current stream using little-endian encoding and advances the
+        /// position of the stream by two bytes.
+        /// </summary>
+        /// <returns>The 2-byte unsigned integer read from the current stream.</returns>
         public override ushort ReadUInt16()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -334,7 +372,7 @@
         /// multiplied with the size of a single value.
         /// </summary>
         /// <param name="count">The number of <see cref="UInt16"/> values to read.</param>
-        /// <returns>An <see cref="UInt16"/> array containing data read from the underlying stream. This might be less
+        /// <returns>The <see cref="UInt16"/> array containing data read from the current stream. This might be less
         /// than the number of bytes requested if the end of the stream is reached.</returns>
         public ushort[] ReadUInt16s(int count)
         {
@@ -346,6 +384,11 @@
             return ushorts;
         }
 
+        /// <summary>
+        /// Reads an 8-byte unsigned integer from the current stream and advances the position of the stream by eight
+        /// bytes.
+        /// </summary>
+        /// <returns>The 8-byte unsigned integer read from the current stream.</returns>
         public override uint ReadUInt32()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -366,7 +409,7 @@
         /// multiplied with the size of a single value.
         /// </summary>
         /// <param name="count">The number of <see cref="UInt32"/> values to read.</param>
-        /// <returns>An <see cref="UInt32"/> array containing data read from the underlying stream. This might be less
+        /// <returns>The <see cref="UInt32"/> array containing data read from the current stream. This might be less
         /// than the number of bytes requested if the end of the stream is reached.</returns>
         public uint[] ReadUInt32s(int count)
         {
@@ -378,6 +421,11 @@
             return uints;
         }
 
+        /// <summary>
+        /// Reads an 8-byte unsigned integer from the current stream and advances the position of the stream by eight
+        /// bytes.
+        /// </summary>
+        /// <returns>The 8-byte unsigned integer read from the current stream.</returns>
         public override ulong ReadUInt64()
         {
             if (ByteOrder == ByteOrder.BigEndian)
@@ -417,7 +465,7 @@
         /// <summary>
         /// Creates a <see cref="SeekTask"/> to restore the current position after it has been disposed.
         /// </summary>
-        /// <returns>A <see cref="SeekTask"/> to be disposed to restore to the current position.</returns>
+        /// <returns>The <see cref="SeekTask"/> to be disposed to restore to the current position.</returns>
         public SeekTask TemporarySeek()
         {
             return TemporarySeek(0, SeekOrigin.Current);
@@ -428,7 +476,7 @@
         /// is disposed, the previous stream position will be restored.
         /// </summary>
         /// <param name="offset">A byte offset relative to the current position in the stream.</param>
-        /// <returns>A <see cref="SeekTask"/> to be disposed to undo the seek.</returns>
+        /// <returns>The <see cref="SeekTask"/> to be disposed to undo the seek.</returns>
         public SeekTask TemporarySeek(long offset)
         {
             return TemporarySeek(offset, SeekOrigin.Current);
@@ -441,7 +489,7 @@
         /// <param name="offset">A byte offset relative to the origin parameter.</param>
         /// <param name="origin">A value of type <see cref="SeekOrigin"/> indicating the reference point used to obtain
         /// the new position.</param>
-        /// <returns>A <see cref="SeekTask"/> to be disposed to undo the seek.</returns>
+        /// <returns>The <see cref="SeekTask"/> to be disposed to undo the seek.</returns>
         public SeekTask TemporarySeek(long offset, SeekOrigin origin)
         {
             return new SeekTask(BaseStream, offset, origin);
