@@ -266,38 +266,38 @@
                 BfresIndexGroup indexGroup = Internal.SubsectionIndexGroups[i];
                 if (indexGroup != null)
                 {
-                    switch ((BfresSubsectionTypes)i)
+                    switch ((BfresSubsectionType)i)
                     {
-                        case BfresSubsectionTypes.Fmdl0:
+                        case BfresSubsectionType.Fmdl0:
                             LoadFmdlSubsections(context);
                             break;
-                        case BfresSubsectionTypes.Ftex1:
+                        case BfresSubsectionType.Ftex1:
                             LoadFtexSubsections(context);
                             break;
-                        case BfresSubsectionTypes.Fska2:
+                        case BfresSubsectionType.Fska2:
                             LoadFskaSubsections(context);
                             break;
-                        case BfresSubsectionTypes.Fshu3:
-                        case BfresSubsectionTypes.Fshu4:
-                        case BfresSubsectionTypes.Fshu5:
+                        case BfresSubsectionType.Fshu3:
+                        case BfresSubsectionType.Fshu4:
+                        case BfresSubsectionType.Fshu5:
                             LoadFshuSubsections(context, i);
                             break;
-                        case BfresSubsectionTypes.Ftxp6:
+                        case BfresSubsectionType.Ftxp6:
                             LoadFtxpSubsections(context);
                             break;
-                        case BfresSubsectionTypes.Unknown7:
+                        case BfresSubsectionType.Unknown7:
                             context.Warnings.Add("BfresFile.SubsectionIndexGroups[7] exists unexpectedly.");
                             break;
-                        case BfresSubsectionTypes.Fvis8:
+                        case BfresSubsectionType.Fvis8:
                             LoadFvisSubsections(context);
                             break;
-                        case BfresSubsectionTypes.Fsha9:
+                        case BfresSubsectionType.Fsha9:
                             LoadFshaSubsections(context);
                             break;
-                        case BfresSubsectionTypes.Fscn10:
+                        case BfresSubsectionType.Fscn10:
                             LoadFscnSubsections(context);
                             break;
-                        case BfresSubsectionTypes.EmbeddedFile11:
+                        case BfresSubsectionType.EmbeddedFile11:
                             LoadEmbeddedFiles(context);
                             break;
                     }
@@ -307,7 +307,7 @@
 
         private void LoadFmdlSubsections(BfresLoaderContext context)
         {
-            BfresIndexGroup indexGroup = Internal.SubsectionIndexGroups[(int)BfresSubsectionTypes.Fmdl0];
+            BfresIndexGroup indexGroup = Internal.SubsectionIndexGroups[(int)BfresSubsectionType.Fmdl0];
             FmdlSections = new List<FmdlSection>(indexGroup.Nodes.Length - 1);
             for (int i = 1; i < indexGroup.Nodes.Length; i++)
             {
@@ -490,7 +490,7 @@
     /// <summary>
     /// Represents the indices to typical subsection file types in a BFRES file.
     /// </summary>
-    public enum BfresSubsectionTypes
+    public enum BfresSubsectionType
     {
         /// <summary>
         /// An FMDL subsection at index 0.

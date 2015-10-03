@@ -1,56 +1,56 @@
-﻿namespace Vibeware.NintenTools.Bfres
+﻿namespace Vibeware.NintenTools.Yaz0
 {
     using System;
     using System.Globalization;
     using System.Runtime.Serialization;
 
     /// <summary>
-    /// Represents an exception caused by invalid BFRES data.
+    /// Represents an exception caused by invalid Yaz0 data.
     /// </summary>
     [Serializable]
-    public class BfresException : Exception
+    public class Yaz0Exception : Exception
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BfresException"/> class.
+        /// Initializes a new instance of the <see cref="Yaz0Exception"/> class.
         /// </summary>
-        public BfresException()
+        public Yaz0Exception()
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BfresException"/> class with the given message.
+        /// Initializes a new instance of the <see cref="Yaz0Exception"/> class with the given message.
         /// </summary>
         /// <param name="message">The message provided with the exception.</param>
-        public BfresException(string message)
+        public Yaz0Exception(string message)
             : base(message)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BfresException"/> class with the given message and inner
+        /// Initializes a new instance of the <see cref="Yaz0Exception"/> class with the given message and inner
         /// exception.
         /// </summary>
         /// <param name="message">The message provided with the exception.</param>
         /// <param name="innerException">The inner exception.</param>
-        public BfresException(string message, Exception innerException)
+        public Yaz0Exception(string message, Exception innerException)
             : base(message, innerException)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BfresException"/> class with the given message.
+        /// Initializes a new instance of the <see cref="Yaz0Exception"/> class with the given message.
         /// </summary>
         /// <param name="format">A composite format string representing the message.</param>
         /// <param name="args">An object array that contains zero or more objects to format.</param>
-        public BfresException(string format, params object[] args)
+        public Yaz0Exception(string format, params object[] args)
             : base(string.Format(CultureInfo.CurrentCulture, format, args))
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="BfresException"/> class with serialized data.
+        /// Initializes a new instance of the <see cref="Yaz0Exception"/> class with serialized data.
         /// </summary>
         /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the
         /// exception being thrown.</param>
@@ -59,7 +59,7 @@
         /// <exception cref="ArgumentNullException">The info parameter is null.</exception>
         /// <exception cref="SerializationException">The class name is null or <see cref="Exception.HResult"/> is zero
         /// (0).</exception>
-        protected BfresException(SerializationInfo info, StreamingContext context)
+        protected Yaz0Exception(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }

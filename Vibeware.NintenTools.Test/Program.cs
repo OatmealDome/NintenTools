@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.IO;
     using Vibeware.NintenTools.Bfres;
+    using Vibeware.NintenTools.Yaz0;
 
     /// <summary>
     /// The main class of the application.
@@ -14,12 +15,17 @@
         
         private static void Main(string[] args)
         {
+            DecompressYaz0File(@"D:\Pictures\Iggy.szs", @"D:\Pictures\Iggy.bfres");
+            //LoadBfresFile(@"D:\Pictures\Iggy.bfres");
+        }
+
+        private static void LoadBfresFile(string fileName)
+        {
             BfresFile bfresFile;
             List<string> warnings;
 
             // Load an example BFRES file.
-            using (FileStream stream = new FileStream(@"D:\Pictures\Iggy.bfres", FileMode.Open, FileAccess.Read,
-                FileShare.Read))
+            using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 bfresFile = new BfresFile();
                 warnings = bfresFile.Load(stream);
@@ -32,6 +38,15 @@
                 Console.WriteLine(warning);
             }
             Console.ReadLine();
+        }
+
+        private static void DecompressYaz0File(string inputFile, string outputFile)
+        {
+            using (FileStream input = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (FileStream output = new FileStream(outputFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
+            {
+                Yaz0Compression.Decompress(input, output);
+            }
         }
     }
 }
