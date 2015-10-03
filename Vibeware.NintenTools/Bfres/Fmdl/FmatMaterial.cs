@@ -55,14 +55,15 @@
         }
 
         /// <summary>
-        /// Gets or sets the list of <see cref="FtexSection"/> instances which represent the used texture data.
+        /// Gets or sets the list of <see cref="FmatTextureSelector"/> instances referencing a texture by name and
+        /// offset.
         /// </summary>
-        public List<FtexSection> Textures
+        public List<FmatTextureSelector> TextureSelectors
         {
             get;
             set;
         }
-
+        
         /// <summary>
         /// Gets or sets the list of <see cref="FmatTextureAttributeSelector"/> instances which describe the values of attribute shader
         /// variables.
@@ -175,13 +176,13 @@
         {
             context.Reader.Position = Internal.RenderParameterIndexGroupOffset.ToFile;
             Internal.RenderParameterIndexGroup = new BfresIndexGroup(context);
-            if (Internal.RenderParameterIndexGroup.EntryCount != Internal.RenderParameterCount)
+            if (Internal.RenderParameterIndexGroup.NodeCount != Internal.RenderParameterCount)
             {
                 context.Warnings.Add("FmatMaterial.RenderParameterIndexGroup has node count unequal to header");
             }
 
             // Load the referenced instances into the list.
-            RenderParameters = new List<FmatRenderParameter>((int)Internal.RenderParameterIndexGroup.EntryCount);
+            RenderParameters = new List<FmatRenderParameter>((int)Internal.RenderParameterIndexGroup.NodeCount);
             for (int i = 1; i < Internal.RenderParameterIndexGroup.Nodes.Length; i++)
             {
                 BfresIndexGroupNode node = Internal.RenderParameterIndexGroup[i];
@@ -193,13 +194,11 @@
         private void LoadTextureSelectors(BfresLoaderContext context)
         {
             context.Reader.Position = Internal.TextureSelectorOffset.ToFile;
-            Internal.TextureSelectors = new List<FmatTextureSelector>(Internal.TextureSelectorCount);
+            TextureSelectors = new List<FmatTextureSelector>(Internal.TextureSelectorCount);
             for (int i = 0; i < Internal.TextureSelectorCount; i++)
             {
-                Internal.TextureSelectors.Add(new FmatTextureSelector(context));
+                TextureSelectors.Add(new FmatTextureSelector(context));
             }
-
-            // TODO: Load the textures here... or map them later... or how?
         }
 
         private void LoadTextureAttributeSelectors(BfresLoaderContext context)
@@ -215,7 +214,7 @@
             // Load the index group, just for internal use and fun.
             context.Reader.Position = Internal.TextureAttributeSelectorIndexGroupOffset.ToFile;
             Internal.TextureAttributeSelectorIndexGroup = new BfresIndexGroup(context);
-            if (Internal.TextureAttributeSelectorIndexGroup.EntryCount != Internal.TextureAttributeSelectorCount)
+            if (Internal.TextureAttributeSelectorIndexGroup.NodeCount != Internal.TextureAttributeSelectorCount)
             {
                 context.Warnings.Add("FmatMaterial.TextureAttributeSelectorIndexGroup has node count unequal to "
                     + "header");
@@ -244,7 +243,7 @@
             // Load the index group, just for internal use and because I feel nasty today.
             context.Reader.Position = Internal.MaterialParameterIndexGroupOffset.ToFile;
             Internal.MaterialParameterIndexGroup = new BfresIndexGroup(context);
-            if (Internal.MaterialParameterIndexGroup.EntryCount != Internal.MaterialParameterCount)
+            if (Internal.MaterialParameterIndexGroup.NodeCount != Internal.MaterialParameterCount)
             {
                 context.Warnings.Add("FmatMaterial.MaterialParameterIndexGroup has node count unequal to header");
             }
@@ -476,16 +475,6 @@
             /// Gets or sets the offset to unknown data, pointing to 12 empty bytes, which may not always be set.
             /// </summary>
             public BfresOffset Unknown0x44
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
-            /// Gets or sets the list of <see cref="FmatTextureSelector"/> instances referencing a texture by name and
-            /// offset.
-            /// </summary>
-            public List<FmatTextureSelector> TextureSelectors
             {
                 get;
                 set;

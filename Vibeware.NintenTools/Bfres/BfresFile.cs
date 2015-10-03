@@ -256,6 +256,9 @@
             }
             
             LoadSubsections(context);
+
+            // Link section instances to properties of other instances, to make an object-oriented design possible.
+            SatisfyReferences(context);
         }
 
         private void LoadSubsections(BfresLoaderContext context)
@@ -320,6 +323,15 @@
 
         private void LoadFtexSubsections(BfresLoaderContext context)
         {
+            BfresIndexGroup indexGroup = Internal.SubsectionIndexGroups[(int)BfresSubsectionType.Ftex1];
+            FtexSections = new List<FtexSection>(indexGroup.Nodes.Length - 1);
+            for (int i = 1; i < indexGroup.Nodes.Length; i++)
+            {
+                BfresIndexGroupNode node = indexGroup.Nodes[i];
+                // Position the reader and load the section into the list.
+                context.Reader.Position = node.DataPointer.ToFile;
+                FtexSections.Add(new FtexSection(context));
+            }
         }
 
         private void LoadFskaSubsections(BfresLoaderContext context)
@@ -348,6 +360,40 @@
 
         private void LoadEmbeddedFiles(BfresLoaderContext context)
         {
+        }
+
+        private void SatisfyReferences(BfresLoaderContext context)
+        {
+            SatisfyTextureSelectorInstances(context);
+        }
+
+        private void SatisfyTextureSelectorInstances(BfresLoaderContext context)
+        {
+            // Link FtexSection instances to the FmatMaterial texture selectors.
+            BfresIndexGroup ftexIndexGroup = Internal.SubsectionIndexGroups[(int)BfresSubsectionType.Ftex1];
+
+            // Go through each model in the file.
+            foreach (FmdlSection fmdlSection in FmdlSections)
+            {
+                // Go through each material of that model.
+                foreach (FmatMaterial fmatMaterial in fmdlSection.Materials)
+                {
+                    // Go through each texture of that material.
+                    foreach (FmatTextureSelector textureSelector in fmatMaterial.TextureSelectors)
+                    {
+                        int? textureIndex = ftexIndexGroup.GetIndexByName(textureSelector.Name);
+                        if (textureIndex == null)
+                        {
+                            context.Warnings.Add("FmatTextureSelector references FtexSection with unknown name.");
+                        }
+                        else
+                        {
+                            // Link the referenced texture.
+                            textureSelector.Texture = FtexSections[textureIndex.Value - 1];
+                        }
+                    }
+                }
+            }
         }
 
         // ---- CLASSES ------------------------------------------------------------------------------------------------

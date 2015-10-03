@@ -17,6 +17,18 @@
         {
             DecompressYaz0File(@"D:\Pictures\Iggy.szs", @"D:\Pictures\Iggy.bfres");
             LoadBfresFile(@"D:\Pictures\Iggy.bfres");
+
+            Console.ReadLine();
+        }
+
+        private static void DecompressYaz0File(string inputFileName, string outputFileName)
+        {
+            Console.Write("Decompressing \"{0}\" to \"{1}\"... ", inputFileName, outputFileName);
+
+            Yaz0File yaz0File = new Yaz0File(inputFileName);
+            yaz0File.Decompress(outputFileName);
+
+            Console.WriteLine("successfully decompressed.");
         }
 
         private static void LoadBfresFile(string fileName)
@@ -39,17 +51,6 @@
             {
                 Console.WriteLine(warning);
             }
-            Console.ReadLine();
-        }
-
-        private static void DecompressYaz0File(string inputFileName, string outputFileName)
-        {
-            Console.Write("Decompressing \"{0}\" to \"{1}\"... ", inputFileName, outputFileName);
-
-            Yaz0File yaz0File = new Yaz0File(inputFileName);
-            yaz0File.Decompress(outputFileName);
-
-            Console.WriteLine("successfully decompressed.");
         }
     }
 }

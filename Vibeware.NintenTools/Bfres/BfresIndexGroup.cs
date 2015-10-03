@@ -50,7 +50,7 @@
         /// <summary>
         /// Gets the number of <see cref="BfresIndexGroupNode"/> instances without the root node.
         /// </summary>
-        public uint EntryCount
+        public uint NodeCount
         {
             get;
             set;
@@ -69,19 +69,19 @@
         // ---- OPERATORS ----------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Gets the <see cref="BfresIndexGroupNode"/> with the given name or <c>null</c> if it does not exist.
+        /// Gets the <see cref="BfresIndexGroupNode"/> with the given name or <c>null</c> if no node has that name.
         /// </summary>
-        /// <param name="entryName">The name of the node to retrieve.</param>
+        /// <param name="nodeName">The name of the node to retrieve.</param>
         /// <returns>The node with the given name or <c>null</c> if no node has this name.</returns>
-        public BfresIndexGroupNode this[string entryName]
+        public BfresIndexGroupNode this[string nodeName]
         {
             get
             {
-                foreach (BfresIndexGroupNode entry in Nodes)
+                foreach (BfresIndexGroupNode node in Nodes)
                 {
-                    if (entry.Name == entryName)
+                    if (node.Name == nodeName)
                     {
-                        return entry;
+                        return node;
                     }
                 }
 
@@ -102,6 +102,28 @@
             }
         }
 
+        // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Gets the index of the node with the given name or <c>null</c> if no node has that name.
+        /// </summary>
+        /// <param name="nodeName">The name of the node to retrieve.</param>
+        /// <returns>The index of the node with the given name or <c>null</c> if no node has this name.</returns>
+        public int? GetIndexByName(string nodeName)
+        {
+            // It is useless to check the reference node since the name is always empty, but maybe the user wants that.
+            for (int i = 0; i < Nodes.Length; i++)
+            {
+                BfresIndexGroupNode node = Nodes[i];
+                if (node.Name == nodeName)
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
+
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
 
         private void Load(BfresLoaderContext context)
@@ -109,10 +131,10 @@
             Internal = new Internals();
 
             Internal.Length = context.Reader.ReadUInt32();
-            EntryCount = context.Reader.ReadUInt32();
+            NodeCount = context.Reader.ReadUInt32();
 
-            // Read the nodes (first entry is no actual data, but reference point, and doesn't count).
-            Nodes = new BfresIndexGroupNode[(int)EntryCount + 1];
+            // Read the nodes (first node is no actual data, but reference point, and doesn't count).
+            Nodes = new BfresIndexGroupNode[(int)NodeCount + 1];
             for (int i = 0; i < Nodes.Length; i++)
             {
                 Nodes[i] = new BfresIndexGroupNode(context);

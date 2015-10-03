@@ -1,6 +1,7 @@
 ﻿namespace Vibeware.NintenTools.Bfres.Fmdl
 {
     using System.Diagnostics;
+    using Vibeware.NintenTools.Bfres.Ftex;
     using Vibeware.NintenTools.IO;
 
     /// <summary>
@@ -41,6 +42,15 @@
             set;
         }
 
+        /// <summary>
+        /// Gets or sets the referenced <see cref="FtexTexture"/> instance.
+        /// </summary>
+        public FtexSection Texture
+        {
+            get;
+            set;
+        }
+
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
 
         private void Load(BfresLoaderContext context)
@@ -50,6 +60,8 @@
             Internal.NameOffset = context.Reader.ReadBfresNameOffset();
             Name = Internal.NameOffset.Name;
             Internal.TextureOffset = context.Reader.ReadBfresOffset();
+
+            // Referenced texture is linked after loading and mapping the raw data.
         }
 
         // ---- CLASSES ------------------------------------------------------------------------------------------------
