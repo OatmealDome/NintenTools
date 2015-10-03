@@ -15,38 +15,44 @@
         
         private static void Main(string[] args)
         {
-            DecompressYaz0File(@"D:\Pictures\Iggy.szs", @"D:\Pictures\Iggy.bfres");
-            LoadBfresFile(@"D:\Pictures\Iggy.bfres");
+            // Decompress an example file into a memory stream.
+            using (MemoryStream bfresDataStream = new MemoryStream())
+            {
+                DecompressYaz0File(@"D:\Pictures\Iggy.szs", bfresDataStream);
+                // Load the decompressed BFRES contents from the data stream.
+                LoadBfresFile(bfresDataStream);
+            }
 
             Console.ReadLine();
         }
 
-        private static void DecompressYaz0File(string inputFileName, string outputFileName)
+        private static void DecompressYaz0File(string inputFile, MemoryStream output)
         {
-            Console.Write("Decompressing \"{0}\" to \"{1}\"... ", inputFileName, outputFileName);
+            Console.Write("Decompressing \"{0}\"... ", inputFile);
 
-            Yaz0File yaz0File = new Yaz0File(inputFileName);
-            yaz0File.Decompress(outputFileName);
+            int bytesDecompressed;
+            using (FileStream input = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                bytesDecompressed = Yaz0Compression.Decompress(input, output);
+            }
 
-            Console.WriteLine("successfully decompressed.");
+            Console.WriteLine("successfully decompressed {0} bytes.", bytesDecompressed);
         }
 
-        private static void LoadBfresFile(string fileName)
+        private static void LoadBfresFile(MemoryStream dataStream)
         {
-            Console.Write("Loading \"{0}\"... ", fileName);
+            Console.Write("Loading BFRES data... ");
 
             BfresFile bfresFile;
             List<string> warnings;
 
-            // Load the given BFRES file.
-            using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                bfresFile = new BfresFile();
-                warnings = bfresFile.Load(stream);
-            }
+            // Load the BFRES data from the start of the given stream.
+            bfresFile = new BfresFile();
+            dataStream.Position = 0;
+            warnings = bfresFile.Load(dataStream);
 
             // Output warnings to console.
-            Console.WriteLine("{0} warnings occured when loading the file.", warnings.Count);
+            Console.WriteLine("{0} warnings occured when loading the BFRES data.", warnings.Count);
             foreach (string warning in warnings)
             {
                 Console.WriteLine(warning);
