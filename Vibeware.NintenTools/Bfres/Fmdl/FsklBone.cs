@@ -7,7 +7,7 @@
     /// <summary>
     /// Represents a single bone of a <see cref="FsklSkeleton"/>.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Bone {Name}")]
     public class FsklBone
     {
         // ---- CLASSES ------------------------------------------------------------------------------------------------

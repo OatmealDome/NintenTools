@@ -7,7 +7,7 @@
     /// Represents an shadow parameter in an FMAT subsection which describes the value to assign to a uniform shadow
     /// variable in the shader.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Shadow Parameter {Name}")]
     public class FmatShadowParameter
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

@@ -9,7 +9,7 @@
     /// Represents a material parameter in an FMAT subsection, describing how a value is passed to a uniform variable in
     /// shader code.
     /// </summary>
-    [DebuggerDisplay("{Type} {Name} = {Value}")]
+    [DebuggerDisplay("Material Parameter {Type} {Name} = {Value}")]
     public class FmatMaterialParameter
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

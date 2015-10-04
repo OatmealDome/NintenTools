@@ -6,7 +6,7 @@
     /// <summary>
     /// Represents an attribute in an FMAT subsection, describing how a texture is passed to the pixel shader input.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Texture Attribute Selector {Name}")]
     public class FmatTextureAttributeSelector
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

@@ -6,7 +6,7 @@
     /// <summary>
     /// Represents the layout of one part of an element in the raw data array of a <see cref="FvtxVertData"/> instance.
     /// </summary>
-    [DebuggerDisplay("{Offset}: {Name}")]
+    [DebuggerDisplay("Vertex Attribute {Name}@{Offset}")]
     public class FvtxVertexAttribute
     {
         // ---- CLASSES ------------------------------------------------------------------------------------------------

@@ -7,7 +7,7 @@
     /// <summary>
     /// Represents an FMDL section in a BFRES file which contains model data.
     /// </summary>
-    [DebuggerDisplay("{FileName}")]
+    [DebuggerDisplay("FMDL {Name}")]
     public class FmdlSection
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------
@@ -34,9 +34,9 @@
         }
 
         /// <summary>
-        /// Gets or sets the internally stored name of this FMDL section.
+        /// Gets or sets the name of this FMDL section.
         /// </summary>
-        public string FileName
+        public string Name
         {
             get;
             set;
@@ -54,7 +54,7 @@
         /// <summary>
         /// Gets or sets the list of vertex buffers describing the vertex data for each polygon.
         /// </summary>
-        public List<FvtxVertexBuffer> VertexData
+        public List<FvtxVertexBuffer> VertexBuffers
         {
             get;
             set;
@@ -100,19 +100,19 @@
             }
 
             // Read section properties.
-            Internal.FileNameOffset = context.Reader.ReadBfresNameOffset();
-            FileName = Internal.FileNameOffset.Name;
+            Internal.NameOffset = context.Reader.ReadBfresNameOffset();
+            Name = Internal.NameOffset.Name;
             Internal.EndOfBfresStringTable = context.Reader.ReadBfresOffset();
 
             // Read subsection offsets.
             Internal.SkeletonOffset = context.Reader.ReadBfresOffset();
-            Internal.VertexDataOffset = context.Reader.ReadBfresOffset();
+            Internal.VertexBufferOffset = context.Reader.ReadBfresOffset();
             Internal.ModelsIndexGroupOffset = context.Reader.ReadBfresOffset();
             Internal.MaterialsIndexGroupOffset = context.Reader.ReadBfresOffset();
             Internal.ParameterIndexGroupOffset = context.Reader.ReadBfresOffset();
 
             // Read subsection counts.
-            Internal.VertexDataCount = context.Reader.ReadUInt16();
+            Internal.VertexBufferCount = context.Reader.ReadUInt16();
             Internal.ModelCount = context.Reader.ReadUInt16();
             Internal.MaterialCount = context.Reader.ReadUInt16();
             Internal.ParameterCount = context.Reader.ReadUInt16();
@@ -141,13 +141,13 @@
 
         private void LoadVertexBuffers(BfresLoaderContext context)
         {
-            if (!Internal.VertexDataOffset.IsEmpty)
+            if (!Internal.VertexBufferOffset.IsEmpty)
             {
-                context.Reader.Position = Internal.VertexDataOffset.ToFile;
-                VertexData = new List<FvtxVertexBuffer>(Internal.VertexDataCount);
-                for (int i = 0; i < Internal.VertexDataCount; i++)
+                context.Reader.Position = Internal.VertexBufferOffset.ToFile;
+                VertexBuffers = new List<FvtxVertexBuffer>(Internal.VertexBufferCount);
+                for (int i = 0; i < Internal.VertexBufferCount; i++)
                 {
-                    VertexData.Add(new FvtxVertexBuffer(context));
+                    VertexBuffers.Add(new FvtxVertexBuffer(context));
                 }
             }
         }
@@ -226,9 +226,9 @@
             // ---- PROPERTIES -----------------------------------------------------------------------------------------
 
             /// <summary>
-            /// Gets or sets the offset to the file name without the extension in the string table.
+            /// Gets or sets the offset to the name in the string table.
             /// </summary>
-            public BfresNameOffset FileNameOffset
+            public BfresNameOffset NameOffset
             {
                 get;
                 set;
@@ -255,7 +255,7 @@
             /// <summary>
             /// Gets or sets the offset to the first <see cref="FvtxVertexBuffer"/> instance.
             /// </summary>
-            public BfresOffset VertexDataOffset
+            public BfresOffset VertexBufferOffset
             {
                 get;
                 set;
@@ -319,9 +319,9 @@
             }
 
             /// <summary>
-            /// Gets or sets the number of <see cref="FvtxVertexBuffer"/> instances in the <see cref="VertexData"/> list.
+            /// Gets or sets the number of <see cref="FvtxVertexBuffer"/> instances in the <see cref="VertexBuffers"/> list.
             /// </summary>
-            public ushort VertexDataCount
+            public ushort VertexBufferCount
             {
                 get;
                 set;

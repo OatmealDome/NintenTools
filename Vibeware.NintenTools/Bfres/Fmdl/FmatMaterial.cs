@@ -9,7 +9,7 @@
     /// <summary>
     /// Represents an FMAT subsection in a FMDL section which describes a material to draw polygons with.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Material {Name}")]
     public class FmatMaterial
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

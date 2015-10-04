@@ -33,6 +33,15 @@
         }
 
         /// <summary>
+        /// Gets or sets the total number of points in all visibility groups.
+        /// </summary>
+        public uint TotalPointCount
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
         /// Gets or sets the list of <see cref="FshpVisibilityGroup"/> instances, describing the start and length of
         /// parts to draw from the index buffer.
         /// </summary>
@@ -79,7 +88,7 @@
                 context.Warnings.Add("FshpLodModel.Unknown0x04 has unexpected value of " + Internal.Unknown0x04);
             }
 
-            Internal.TotalPointCount = context.Reader.ReadUInt32();
+            TotalPointCount = context.Reader.ReadUInt32();
             Internal.VisibilityGroupCount = context.Reader.ReadUInt16();
 
             Internal.Unknown0x0E = context.Reader.ReadUInt16();
@@ -138,15 +147,6 @@
             /// Gets or sets an unknown variable at offset 0x04. The value always seems to be 0x04.
             /// </summary>
             public uint Unknown0x04
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
-            /// Gets or sets the total number of points in all visibility groups.
-            /// </summary>
-            public uint TotalPointCount
             {
                 get;
                 set;

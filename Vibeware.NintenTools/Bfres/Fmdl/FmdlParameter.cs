@@ -6,7 +6,7 @@
     /// <summary>
     /// Represents a generic parameter referenced by a FMDL section which describes arbitrary model parameters.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Parameter {Name}")]
     public class FmdlParameter
     {
         // ---- CLASSES ------------------------------------------------------------------------------------------------

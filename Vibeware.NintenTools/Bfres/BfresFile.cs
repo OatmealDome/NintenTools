@@ -364,18 +364,39 @@
 
         private void SatisfyReferences(BfresLoaderContext context)
         {
-            SatisfyTextureSelectorInstances(context);
+            SatisfyFshpModels(context);
+            SatisfyTextureSelectors(context);
         }
 
-        private void SatisfyTextureSelectorInstances(BfresLoaderContext context)
+        private void SatisfyFshpModels(BfresLoaderContext context)
+        {
+            // Go through each FMDL section in the file.
+            foreach (FmdlSection fmdlSection in FmdlSections)
+            {
+                // Go through each model in that FMDL section.
+                foreach (FshpModel fshpModel in fmdlSection.Models)
+                {
+                    // Link the FsklBone.
+                    fshpModel.Bone = fmdlSection.Skeleton.Bones[fshpModel.Internal.BoneIndex];
+
+                    // Link the FmatMaterial.
+                    fshpModel.Material = fmdlSection.Materials[fshpModel.Internal.MaterialIndex];
+
+                    // Link the FvtxVertexData.
+                    fshpModel.VertexBuffer = fmdlSection.VertexBuffers[fshpModel.Internal.VertexBufferIndex];
+                }
+            }
+        }
+        
+        private void SatisfyTextureSelectors(BfresLoaderContext context)
         {
             // Link FtexSection instances to the FmatMaterial texture selectors.
             BfresIndexGroup ftexIndexGroup = Internal.SubsectionIndexGroups[(int)BfresSubsectionType.Ftex1];
 
-            // Go through each model in the file.
+            // Go through each FMDL section in the file.
             foreach (FmdlSection fmdlSection in FmdlSections)
             {
-                // Go through each material of that model.
+                // Go through each material of that FMDL section.
                 foreach (FmatMaterial fmatMaterial in fmdlSection.Materials)
                 {
                     // Go through each texture of that material.

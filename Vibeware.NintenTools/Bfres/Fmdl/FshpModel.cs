@@ -7,7 +7,7 @@
     /// <summary>
     /// Represents an FSHP subsection in a FMDL section which describes how data in a vertex buffer is drawn.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Model {Name}")]
     public class FshpModel
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------
@@ -99,7 +99,11 @@
         }
 
         /// <summary>
-        /// Gets or sets a list of FSKL skeleton offsets with unknown purpose.
+        /// Gets or sets a list of FSKL skeleton offsets. They seem to state the index of a bone to which a part of the
+        /// model should be positioned upon load.
+        /// Almost all Mario Kart 8 character models reference the index of the "Head" bone to position the "Pupil"
+        /// model there. If this is ignored, the "Pupil" mesh will be positioned to the scene origin, near the legs of
+        /// the model.
         /// </summary>
         public List<ushort> SkeletonOffsets
         {

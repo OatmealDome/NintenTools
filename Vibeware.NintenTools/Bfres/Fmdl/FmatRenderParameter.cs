@@ -9,7 +9,7 @@
     /// Represents a render parameter in an FMAT subsection, describing the value to assign to a uniform variable in
     /// shader code.
     /// </summary>
-    [DebuggerDisplay("{Type} {Name} = {Value}")]
+    [DebuggerDisplay("Render Parameter {Type} {Name} = {Value}")]
     public class FmatRenderParameter
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

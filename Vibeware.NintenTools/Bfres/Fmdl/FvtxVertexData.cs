@@ -1,5 +1,6 @@
 ﻿namespace Vibeware.NintenTools.Bfres.Fmdl
 {
+    using System;
     using System.Collections.Generic;
     using System.IO;
     using Vibeware.NintenTools.IO;
@@ -8,6 +9,8 @@
     /// <summary>
     /// Represents the raw data array of a FVTX subsection, and describes the layout of each element in it.
     /// </summary>
+    /// <remarks>This is named "Buffer" in the Mario Kart 8 wiki, but since it mostly describes raw data compared to the
+    /// </remarks>
     public class FvtxVertexData
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------
@@ -61,6 +64,41 @@
         }
 
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
+        
+        /// <summary>
+        /// Gets an array of <see cref="Vector2F"/> values representing the attributes data in each element.
+        /// </summary>
+        /// <param name="attribute">The <see cref="FvtxVertexAttribute"/>, which data is referenced.</param>
+        /// <returns>An array containing the attributes data in each element.</returns>
+        public Vector2F[] GetAttributeDataAsVector2F(FvtxVertexAttribute attribute)
+        {
+            List<Vector2F> typedData = new List<Vector2F>();
+
+            using (BinaryDataReader reader = new BinaryDataReader(new MemoryStream(Data)))
+            {
+                reader.ByteOrder = ByteOrder.BigEndian;
+                // Go through the array elements.
+                for (int i = 0; i < Data.Length; i += (int)Stride)
+                {
+                    reader.Position = i + attribute.Offset;
+                    switch (attribute.Format)
+                    {
+                        case FvtxVertexAttributeFormat.Two_32Bit_Float:
+                            typedData.Add(reader.ReadVector2F());
+                            break;
+                        case FvtxVertexAttributeFormat.Two_16Bit_Normalized:
+                            ushort x = reader.ReadUInt16();
+                            ushort y = reader.ReadUInt16();
+                            typedData.Add(new Vector2F(x / 65535f, y / 65535f));
+                            break;
+                        default:
+                            throw new BfresException("Cannot retrieve attribute data as Vector2F: Mismatching format.");
+                    }
+                }
+            }
+
+            return typedData.ToArray();
+        }
 
         /// <summary>
         /// Gets an array of <see cref="Vector3F"/> values representing the attributes data in each element.
@@ -83,8 +121,17 @@
                         case FvtxVertexAttributeFormat.Three_32Bit_Float:
                             typedData.Add(reader.ReadVector3F());
                             break;
+                        case FvtxVertexAttributeFormat.Three_10Bit_Signed:
+                            // Actually 32 bits, first 2 bits always 0b01. Packed like 01XXXXXXXXXXYYYYYYYYYYZZZZZZZZZZ.
+                            uint packedBytes = reader.ReadUInt32();
+                            short x = (short)((packedBytes >> 20) & 0x3FF);
+                            short y = (short)((packedBytes >> 10) & 0x3FF);
+                            short z = (short)(packedBytes & 0x3FF);
+                            // Divide by 511 to get the float value.
+                            typedData.Add(new Vector3F(x / 511f, y / 511f, z / 511f));
+                            break;
                         default:
-                            throw new BfresException("Cannot retrieve attribute data as Vector3F: Unsupported format.");
+                            throw new BfresException("Cannot retrieve attribute data as Vector3F: Mismatching format.");
                     }
                 }
             }

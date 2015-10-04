@@ -7,7 +7,7 @@
     /// <summary>
     /// Represents a texture selector in an FMAT subsection, describing the name and offset of the texture to reference.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Texture Selector {Name}")]
     public class FmatTextureSelector
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

@@ -26,6 +26,7 @@
         {
 #if DEBUG
             args = new string[] { @"D:\Pictures\Iggy.szs", @"D:\Pictures\Iggy.obj" };
+            //args = new string[] { @"D:\Pictures\ClBattleShipS.bfres", @"D:\Pictures\ClBattleShipS.obj" };
 #endif
             try
             {

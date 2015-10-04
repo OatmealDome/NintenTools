@@ -87,7 +87,7 @@
                 + "{0}        Output  The name of the output model file."
                 + "{0}                The file extensions map to the following supported formats:"
                 + "{0}                BFRES  Do not convert, just decompress SZS to BFRES"
-                + "{0}                OBJ    OBJ/MTL model format with material file", Environment.NewLine),
+                + "{0}                OBJ    Wavefront OBJ/MTL", Environment.NewLine),
             "The specified input file does not exist",
             "The type of the input file is not supported",
             "The type of the output file is not supported",
@@ -103,7 +103,7 @@
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Gets a default, descriptive message describing the return code.
+        /// Gets a default message describing the return code.
         /// </summary>
         /// <param name="returnCode">The extended <see cref="ReturnCode"/> instance.</param>
         /// <returns>A message describing the return code.</returns>

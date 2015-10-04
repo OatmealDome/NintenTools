@@ -6,7 +6,7 @@
     /// <summary>
     /// Represents a node in a <see cref="BfresIndexGroup"/>.
     /// </summary>
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Index Group {Name}")]
     public class BfresIndexGroupNode
     {
         // ---- CLASSES ------------------------------------------------------------------------------------------------
