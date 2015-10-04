@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vibeware.NintenTools", "Vib
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vibeware.NintenTools.Test", "Vibeware.NintenTools.Test\Vibeware.NintenTools.Test.csproj", "{DB4A082C-9559-41E0-8583-DAB4819C9296}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vibeware.NintenTools.BfresConverter", "Vibeware.NintenTools.BfresConverter\Vibeware.NintenTools.BfresConverter.csproj", "{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{DB4A082C-9559-41E0-8583-DAB4819C9296}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB4A082C-9559-41E0-8583-DAB4819C9296}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB4A082C-9559-41E0-8583-DAB4819C9296}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

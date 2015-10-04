@@ -35,21 +35,18 @@
             {
                 bytesDecompressed = Yaz0Compression.Decompress(input, output);
             }
-
+            
             Console.WriteLine("successfully decompressed {0} bytes.", bytesDecompressed);
         }
 
         private static void LoadBfresFile(MemoryStream dataStream)
         {
             Console.Write("Loading BFRES data... ");
-
-            BfresFile bfresFile;
-            List<string> warnings;
-
+            
             // Load the BFRES data from the start of the given stream.
-            bfresFile = new BfresFile();
+            BfresFile bfresFile = new BfresFile();
             dataStream.Position = 0;
-            warnings = bfresFile.Load(dataStream);
+            List<string> warnings = bfresFile.Load(dataStream);
 
             // Output warnings to console.
             Console.WriteLine("{0} warnings occured when loading the BFRES data.", warnings.Count);
