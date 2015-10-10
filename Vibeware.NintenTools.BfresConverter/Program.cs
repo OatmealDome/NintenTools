@@ -25,7 +25,7 @@
         private static int Main(string[] args)
         {
 #if DEBUG
-            args = new string[] { @"D:\Pictures\Iggy.szs", @"D:\Pictures\Iggy.obj" };
+            args = new string[] { @"D:\Pictures\Iggy.bfres", @"D:\Pictures\Iggy.obj" };
             //args = new string[] { @"D:\Pictures\ClBattleShipS.bfres", @"D:\Pictures\ClBattleShipS.obj" };
 #endif
             try
@@ -45,9 +45,6 @@
             
             // If you get here, everything worked alright. At least program flow says that.
             Console.WriteLine("Done");
-#if DEBUG
-            Console.ReadLine();
-#endif
             return (int)ReturnCode.NoError;
         }
 

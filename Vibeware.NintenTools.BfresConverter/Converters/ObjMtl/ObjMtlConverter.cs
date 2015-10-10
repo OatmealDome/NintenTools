@@ -52,7 +52,7 @@
             // Begin a new object and write the corresponding vertex and index data.
             writer.WriteLine("o " + model.Name);
             WriteVertexData(writer, model);
-            // TODO: WriteIndexData(writer, model);
+            WriteIndexData(writer, model);
         }
 
         private void WriteVertexData(StreamWriter writer, FshpModel model)
@@ -98,7 +98,10 @@
             ushort[] indices = lodModel.IndexBuffer.Data;
             for (int i = 0; i < indices.Length; i+= 3)
             {
-                writer.WriteLine(string.Format("f {0}/{0}/{0} {1}/{1}/{1} {2}/{2}/{2}", indices[i], indices[i + 1], indices[i + 2]));
+                int index1 = indices[i + 0] + 1 + (int)lodModel.SkipElements;
+                int index2 = indices[i + 1] + 1 + (int)lodModel.SkipElements;
+                int index3 = indices[i + 2] + 1 + (int)lodModel.SkipElements;
+                writer.WriteLine(string.Format("f {0} {1} {2}", index1, index2, index3));
             }
         }
 
