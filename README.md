@@ -8,8 +8,9 @@ Usage
 =====
 
 Right now, the following usage cases are possible:
-- Use it as a managed .NET 4.5 library to load and inspect BFRES files. Add the assembly to your references, and start programming with it.
-- The "Test" tool validates BFRES at the moment and if any researched details meet what is seen in the wild. It prints any assumptions not met as a warning.
+- Decompress Yaz0 files.
+- Load and inspect BFRES files.
+- "Test" tool validates BFRES with researched details. It prints any assumptions not met as a warning.
 
 Contributing
 ============
