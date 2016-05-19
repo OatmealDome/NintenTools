@@ -15,12 +15,17 @@
         
         private static void Main(string[] args)
         {
-            // Decompress an example file into a memory stream.
-            using (MemoryStream bfresDataStream = new MemoryStream())
+            //// Decompress an example file into a memory stream.
+            //using (MemoryStream bfresDataStream = new MemoryStream())
+            //{
+            //    DecompressYaz0File(@"D:\Pictures\Iggy.szs", bfresDataStream);
+            //    // Load the decompressed BFRES contents from the data stream.
+            //    LoadBfresFile(bfresDataStream);
+            //}
+
+            using (FileStream fileStream = new FileStream(@"D:\Pictures\Blender Work Folder\course_model.bfres", FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                DecompressYaz0File(@"D:\Pictures\Iggy.szs", bfresDataStream);
-                // Load the decompressed BFRES contents from the data stream.
-                LoadBfresFile(bfresDataStream);
+                LoadBfresFile(fileStream);
             }
 
             Console.ReadLine();
@@ -39,7 +44,7 @@
             Console.WriteLine("successfully decompressed {0} bytes.", bytesDecompressed);
         }
 
-        private static void LoadBfresFile(MemoryStream dataStream)
+        private static void LoadBfresFile(Stream dataStream)
         {
             Console.Write("Loading BFRES data... ");
             

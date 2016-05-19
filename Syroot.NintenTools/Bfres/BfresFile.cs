@@ -288,8 +288,9 @@
                         case BfresSubsectionType.Ftxp6:
                             LoadFtxpSubsections(context);
                             break;
-                        case BfresSubsectionType.Unknown7:
-                            context.Warnings.Add("BfresFile.SubsectionIndexGroups[7] exists unexpectedly.");
+                        case BfresSubsectionType.Fvis7:
+                            context.Warnings.Add("BfresFile.SubsectionIndexGroups[7] normally unused in Mario Kart 8.");
+                            LoadFvisSubsections(context);
                             break;
                         case BfresSubsectionType.Fvis8:
                             LoadFvisSubsections(context);
@@ -593,11 +594,11 @@
         /// An FTXP subsection at index 6.
         /// </summary>
         Ftxp6 = 6,
-        
+
         /// <summary>
-        /// An unknown subsection at index 7.
+        /// An FVIS subsection at index 7, normally unused in Mario Kart 8, but seen in Super Mario Maker.
         /// </summary>
-        Unknown7 = 7,
+        Fvis7 = 7,
 
         /// <summary>
         /// An FVIS subsection at index 8.
