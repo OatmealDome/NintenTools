@@ -18,9 +18,9 @@
         public readonly uint Address;
 
         /// <summary>
-        /// The offset relative to the offsets value itself.
+        /// The offset relative to the offsets value itself (can be negative).
         /// </summary>
-        public readonly uint ToSelf;
+        public readonly int ToSelf;
 
         /// <summary>
         /// The total offset relative to the beginning of the BFRES file.
@@ -36,8 +36,8 @@
         internal BfresOffset(BinaryDataReader reader)
         {
             Address = (uint)reader.Position;
-            ToSelf = reader.ReadUInt32();
-            ToFile = Address + ToSelf;
+            ToSelf = reader.ReadInt32();
+            ToFile = (uint)(Address + ToSelf);
         }
 
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------

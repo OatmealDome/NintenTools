@@ -20,9 +20,9 @@
         public readonly uint Address;
 
         /// <summary>
-        /// The offset relative to the offsets value itself.
+        /// The offset relative to the offsets value itself (can be negative).
         /// </summary>
-        public readonly uint ToSelf;
+        public readonly int ToSelf;
 
         /// <summary>
         /// The total offset relative to the beginning of the BFRES file.
@@ -45,8 +45,8 @@
         internal BfresNameOffset(BinaryDataReader reader)
         {
             Address = (uint)reader.Position;
-            ToSelf = reader.ReadUInt32();
-            ToFile = Address + ToSelf;
+            ToSelf = reader.ReadInt32();
+            ToFile = (uint)(Address + ToSelf);
 
             // Strings are DWORD length-prefixed zero-postfixed, we decide to read a zero-terminated string here.
             // To read the length-prefix, you would have to seek 4 bytes back, as the offsets point to the first char.
