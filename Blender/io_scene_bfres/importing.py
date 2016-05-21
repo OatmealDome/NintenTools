@@ -4,7 +4,6 @@ import bpy_extras
 import os
 from .bfres_file import BfresFile
 
-
 class ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     bl_idname = "import_scene.bfres"
     bl_label = "Import BFRES"
@@ -31,7 +30,6 @@ class ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     def menu_func_import(self, context):
         self.layout.operator(ImportOperator.bl_idname, text="Nintendo BFRES (.bfres)")
 
-
 class Importer:
     def __init__(self, operator, context, filepath):
         self.operator = operator
@@ -41,7 +39,7 @@ class Importer:
         self.bfres_file = None
 
     def run(self):
-        # Load the BFRES file contents.
+        # Load the BFRES file and all its contents.
         self.bfres_file = BfresFile(open(self.filepath, "rb"))
         return {"FINISHED"}
 

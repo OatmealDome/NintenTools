@@ -1,5 +1,3 @@
-from .binary_io import BinaryReader
-
 class BfresOffset:
     def __init__(self, reader):
         self.address = reader.tell()
@@ -8,6 +6,9 @@ class BfresOffset:
 
     def __bool__(self):
         return self.to_self != 0
+
+    def __eq__(self, other):
+        return isinstance(self.__class__, other) and self.to_self == other.to_self
 
 class BfresNameOffset(BfresOffset):
     def __init__(self, reader):
@@ -45,11 +46,16 @@ class IndexGroup:
             self.nodes.append(node)
 
     def __getitem__(self, item):
-        # Lookup nodes either by index or name.
+        # Lookup nodes either by index, name, or data offset.
         if isinstance(item, int):
             return self.nodes[item]
         elif isinstance(item, str):
             for node in self.nodes:
                 if node.name_offset.name == item:
                     return node
-            raise KeyError()
+            raise KeyError("Did not find a node with the given name.")
+        elif isinstance(item, BfresOffset):
+            for node in self.nodes:
+                if node.data_offset == item:
+                    return node
+            raise KeyError("Did not find a node with the given data offset.")

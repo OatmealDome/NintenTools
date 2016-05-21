@@ -1,5 +1,4 @@
 import enum
-import mathutils
 from .binary_io import BinaryReader
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 from .bfres_fmdl import FmdlSection
@@ -11,7 +10,15 @@ Hierarchically visualized, the layout of a BFRES file is as follows:
     - Index Group 0
       - FMDL[] (mostly only 1 of these)
         - FSKL
+          - Bones[]
         - FVTX[]
+          - Attributes[] (referencing the buffer in which they are in)
+          - Buffers[]
+        - FSHP[]
+          - LoD Models[] (probably one when multiple visiblity groups)
+            - Visibility Groups[] (index buffer slices, probably one when multiple LoD models)
+            - Index Buffer
+          - Visibility Group Tree (Nodes[], Ranges[], Indices[], unknown purpose)
         - ...
     - Index Group 1
       - FTEX[]
@@ -25,15 +32,17 @@ the file), and strings are globally collected in a file-wide string table. Data 
 - Index Groups
 - Headers of the sections referenced by the Index Groups
 - String Table
-- Data referenced by the section headers
+- Data referenced by the section and subsection headers
+This order was probably chosen to keep graphical data together, so it can be uploaded to the GPU in one step, while data
+which needs CPU access is stored in the bunch of headers and tables at the beginning of the file.
 
 Index Groups are technically binary trees allowing a quick named lookup of elements in a corresponding array. Combined
 with the array, they are easier to imagine as an OrderedDict which items can be accessed by index or name. This add-on
-uses BfresCollection instances however, a collection preserving the index group node information and allowing access to
-entries via name or index.
+wraps the logic inside IndexGroup classes however, preserving the index group node information and allowing access to
+entries via name, index or offset.
 
 All this makes it quite non-trivial to create an exporter later on, as offsets have to be satisfied after the file is
-completely written. This needs some brain-storming later on as it was probably solved with C pointer maths originally.
+completely written. This needs some brain-storming as it was probably solved with C pointer maths originally.
 '''
 
 class BfresFile:
@@ -92,5 +101,5 @@ class BfresFile:
             if offset:
                 reader.seek(offset.to_file)
                 if i == self.IndexGroupType.Fmdl0:
-                    self.fmdl_sections = IndexGroup(reader, lambda r: FmdlSection(r))
+                    self.fmdl_index_group = IndexGroup(reader, lambda r: FmdlSection(r))
                 # TODO: Other types

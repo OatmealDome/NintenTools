@@ -1,6 +1,5 @@
 import enum
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
-from .binary_io import BinaryReader
 
 class FmdlSection:
     class Header:
@@ -24,12 +23,15 @@ class FmdlSection:
         self.header = self.Header(reader)
         # Read the FSKL subsection.
         reader.seek(self.header.fskl_offset.to_file)
-        self.fskl_subsection = FsklSubsection(reader)
+        self.fskl = FsklSubsection(reader)
         # Read the FVTX subsections.
         reader.seek(self.header.fvtx_array_offset.to_file)
-        self.fvtx_subsections = []
+        self.fvtx_array = []
         for i in range(0, self.header.fvtx_count):
-            self.fvtx_subsections.append(FvtxSubsection(reader))
+            self.fvtx_array.append(FvtxSubsection(reader))
+        # Read the FSHP index group.
+        reader.seek(self.header.fshp_index_group_offset.to_file)
+        self.fshp_index_group = IndexGroup(reader, lambda r: FshpSubsection(r))
 
 class FsklSubsection:
     class Header:
@@ -107,7 +109,7 @@ class FvtxSubsection:
         def __init__(self, reader):
             self.name_offset = BfresOffset(reader)
             index_and_offset = reader.read_uint32() # XXYYYYYY, where X is the buffer index and Y the offset.
-            self.buffer_index = (index_and_offset & 0xFF000000) >> 24
+            self.buffer_index = (index_and_offset & 0xFF000000) >> 24 # The index of the buffer containing this attrib.
             self.element_offset = index_and_offset & 0x00FFFFFF # Offset in each element.
             self.format = reader.read_uint32()
 
@@ -137,5 +139,79 @@ class FvtxSubsection:
         self.buffers = []
         for i in range(0, self.header.buffer_count):
             self.buffers.append(self.Buffer(reader))
-        # Seek back as FVTX headers are read sequentially.
+        # Seek back as FVTX headers are read as an array.
         reader.seek(current_pos)
+
+class FshpSubsection:
+    class Header:
+        def __init__(self, reader):
+            if reader.read_raw_string(4) != "FSHP":
+                raise AssertionError("Invalid FSHP subsection header.")
+            self.name_offset = BfresNameOffset(reader)
+            self.unknown0x08 = reader.read_uint32() # 0x00000002
+            self.index = reader.read_uint16() # The index in the FMDL FSHP index group.
+            self.material_index = reader.read_uint16() # The index of the FMAT material for this polygon.
+            self.bone_index = reader.read_uint16() # The index of the bone this polygon is transformed with.
+            self.section_index = reader.read_uint16() # Same as index in MK8.
+            self.fskl_index_array_count = reader.read_uint16() # Often 0x0000, unknown purpose, related to FSKL.
+            self.unknown0x16 = reader.read_byte() # Tends to be 0x00 if fskl_index_array_count is 0x0000.
+            self.lod_count = reader.read_byte()
+            self.visibility_group_tree_node_count = reader.read_uint32()
+            self.unknown0x1c = reader.read_single()
+            self.fvtx_offset = BfresOffset(reader)
+            self.lod_array_offset = BfresOffset(reader)
+            self.fskl_index_array_offset = BfresOffset(reader)
+            self.unknown0x2c = BfresOffset(reader) # 0x00000000
+            self.visibility_group_tree_nodes_offset = BfresOffset(reader)
+            self.visibility_group_tree_ranges_offset = BfresOffset(reader)
+            self.visibility_group_tree_indices_offset = BfresOffset(reader)
+            self.padding = reader.read_uint32() # 0x00000000
+
+    class LodModel:
+        class VisibilityGroup:
+            def __init__(self, reader):
+                self.index_byte_offset = reader.read_uint32() # Divide by 2 to get the array index; indices are 16-bit.
+                self.index_count = reader.read_uint32()
+
+        class IndexBuffer:
+            def __init__(self, reader):
+                self.unknown0x00 = reader.read_uint32() # 0x00000000
+                self.size_in_bytes = reader.read_uint32() # Divide by 2 to get the number of array elements.
+                self.unknown0x08 = reader.read_uint32() # 0x00000000
+                self.unknown0x0c = reader.read_uint16() # 0x0000
+                self.unknown0x0e = reader.read_uint16() # 0x0001
+                self.unknown0x10 = reader.read_uint32() # 0x00000000
+                self.data_offset = BfresOffset(reader)
+                # Read in the raw data.
+                reader.seek(self.data_offset.to_file)
+                self.indices = reader.read_uint16s(self.size_in_bytes / 2)
+
+        def __init__(self, reader):
+            self.unknown0x00 = reader.read_uint32() # 0x00000004
+            self.unknown0x04 = reader.read_uint32() # 0x00000004
+            self.point_draw_count = reader.read_uint32()
+            self.visibility_group_count = reader.read_uint16()
+            self.unknown0x0e = reader.read_uint16() # 0x0000
+            self.visibility_group_offset = BfresOffset(reader)
+            self.index_buffer_offset = BfresOffset(reader)
+            self.skip_vertices = reader.read_uint32() # The number of elements to skip in the FVTX buffer.
+            # Load the visibility groups.
+            current_pos = reader.tell()
+            reader.seek(self.visibility_group_offset.to_file)
+            self.visibility_groups = []
+            for i in range(0, self.visibility_group_count):
+                self.visibility_groups.append(self.VisibilityGroup(reader))
+            # Load the index buffer.
+            reader.seek(self.index_buffer_offset.to_file)
+            self.index_buffer = self.IndexBuffer(reader)
+            # Seek back as multiple LoD models are stored in an array.
+            reader.seek(current_pos)
+
+    def __init__(self, reader):
+        self.header = self.Header(reader)
+        # Load the LoD model array.
+        reader.seek(self.header.lod_array_offset.to_file)
+        self.lod_models = []
+        for i in range(0, self.header.lod_count):
+            self.lod_models.append(self.LodModel(reader))
+        # Load the visibility group tree nodes, ranges, and indices.
