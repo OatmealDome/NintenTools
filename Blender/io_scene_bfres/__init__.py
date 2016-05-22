@@ -18,6 +18,9 @@ if "bpy" in locals():
     if "binary_io" in locals():
         print("Reloading: " + str(binary_io))
         importlib.reload(binary_io)
+    if "yaz0" in locals():
+        print("Reloading: " + str(yaz0))
+        importlib.reload(yaz0)
     if "bfres_common" in locals():
         print("Reloading: " + str(bfres_common))
         importlib.reload(bfres_common)
@@ -39,6 +42,7 @@ if "bpy" in locals():
 
 import bpy
 from . import log
+from . import yaz0
 from . import binary_io
 from . import bfres_common
 from . import bfres_fmdl

@@ -1,7 +1,9 @@
 import bmesh
 import bpy
 import bpy_extras
+import io
 import os
+from .yaz0 import Yaz0Compression
 from .bfres_file import BfresFile
 
 class ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
@@ -11,12 +13,12 @@ class ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     filename_ext = ".bfres"
     filter_glob = bpy.props.StringProperty(
-        default="*.bfres",
+        default="*.bfres;*.szs",
         options={"HIDDEN"}
     )
     filepath = bpy.props.StringProperty(
         name="File Path",
-        description="Filepath used for importing the BFRES file",
+        description="Filepath used for importing the BFRES or compressed SZS file",
         maxlen=1024,
         default=""
     )
@@ -28,21 +30,23 @@ class ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
 
     @staticmethod
     def menu_func_import(self, context):
-        self.layout.operator(ImportOperator.bl_idname, text="Nintendo BFRES (.bfres)")
+        self.layout.operator(ImportOperator.bl_idname, text="Nintendo BFRES (.bfres/.szs)")
 
 class Importer:
     def __init__(self, operator, context, filepath):
         self.operator = operator
         self.context = context
         self.filepath = filepath
+        self.file_ext = os.path.splitext(self.filepath)[1].upper()
         self.directory = os.path.dirname(self.filepath)
         self.bfres_file = None
 
     def run(self):
-        # Load the BFRES file and all its contents.
-        self.bfres_file = BfresFile(open(self.filepath, "rb"))
+        # Ensure to have a stream with decompressed data.
+        if self.file_ext == ".SZS":
+            raw = Yaz0Compression.decompress(open(self.filepath, "rb"))
+        else:
+            raw = open(self.filepath, "rb")
+        self.bfres_file = BfresFile(raw)
+        # TODO: Now import the loaded data to blender.
         return {"FINISHED"}
-
-    @staticmethod
-    def _log(message):
-        print("BFRES: " + message)
