@@ -1,8 +1,8 @@
 bl_info = {
     "name": "Nintendo BFRES format",
     "author": "Ray Koopa",
-    "version": (16, 5, 18),
-    "blender": (2, 77, 0),
+    "version": (16, 5, 22),
+    "blender": (2, 75, 0),
     "location": "File > Import-Export",
     "description": "Import-Export BFRES mesh, UV's, materials and textures",
     "category": "Import-Export",
@@ -21,6 +21,12 @@ if "bpy" in locals():
     if "bfres_fmdl" in locals():
         print("Reloading: " + str(bfres_fmdl))
         importlib.reload(bfres_fmdl)
+    if "bfres_ftex" in locals():
+        print("Reloading: " + str(bfres_ftex))
+        importlib.reload(bfres_fmdl)
+    if "bfres_embedded" in locals():
+        print("Reloading: " + str(bfres_embedded))
+        importlib.reload(bfres_embedded)
     if "bfres_file" in locals():
         print("Reloading: " + str(bfres_file))
         importlib.reload(bfres_file)
@@ -32,6 +38,8 @@ import bpy
 from . import binary_io
 from . import bfres_common
 from . import bfres_fmdl
+from . import bfres_ftex
+from . import bfres_embedded
 from . import bfres_file
 from . import importing
 

@@ -2,6 +2,8 @@ import enum
 from .binary_io import BinaryReader
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 from .bfres_fmdl import FmdlSection
+from .bfres_ftex import FtexSection
+from .bfres_embedded import EmbeddedFile
 
 '''
 Hierarchically visualized, the layout of a BFRES file is as follows:
@@ -112,7 +114,7 @@ class BfresFile:
         Fvis8 = 8
         Fsha9 = 9
         Fscn10 = 10
-        EmbeddedFile = 11
+        EmbeddedFile11 = 11
 
     def __init__(self, raw):
         # Open a big-endian binary reader on the stream.
@@ -120,15 +122,15 @@ class BfresFile:
         reader.endianness = ">"
         # Read the header.
         self.header = self.Header(reader)
-        # Load the typed data referenced by the specific index groups.
-        self._load_index_group_contents(reader)
-
-    def _load_index_group_contents(self, reader):
+        # Load the typed data referenced by the specific index groups, if present.
         for i in range(0, self.Header.INDEX_GROUP_COUNT):
-            # If an IndexGroup is not present, the offset is 0.
             offset = self.header.index_group_offsets[i]
             if offset:
                 reader.seek(offset.to_file)
                 if i == self.IndexGroupType.Fmdl0:
                     self.fmdl_index_group = IndexGroup(reader, lambda r: FmdlSection(r))
-                # TODO: Other types
+                elif i == self.IndexGroupType.Ftex1:
+                    self.ftex_index_group = IndexGroup(reader, lambda r: FtexSection(r))
+                elif i == self.IndexGroupType.EmbeddedFile11:
+                    self.embedded_file_index_group = IndexGroup(reader, lambda r: EmbeddedFile(r))
+                # TODO: Read other index group types.
