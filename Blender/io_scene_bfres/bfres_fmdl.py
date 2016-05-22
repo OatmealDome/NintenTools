@@ -1,4 +1,5 @@
 import enum
+from .log import Log
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 
 class FmdlSection:
@@ -28,6 +29,7 @@ class FmdlSection:
 
     def __init__(self, reader):
         self.header = self.Header(reader)
+        Log.write(1, "FMDL " + self.header.file_name_offset.name)
         # Load the FSKL subsection.
         reader.seek(self.header.fskl_offset.to_file)
         self.fskl = FsklSubsection(reader)
@@ -68,6 +70,7 @@ class FsklSubsection:
 
         def __init__(self, reader):
             self.name_offset = BfresNameOffset(reader)
+            Log.write(3, "Bone " + self.name_offset.name)
             self.index = reader.read_uint16()
             self.child_indices = []
             for i in range(0, self.CHILD_BONE_COUNT):
@@ -82,6 +85,7 @@ class FsklSubsection:
 
     def __init__(self, reader):
         self.header = self.Header(reader)
+        Log.write(2, "FSKL")
         # Load the bone index group.
         reader.seek(self.header.bone_index_group_array_offset.to_file)
         self.bone_index_group = IndexGroup(reader, lambda r: self.Bone(r))
@@ -122,7 +126,7 @@ class FvtxSubsection:
             Three32BitFloat    = 0x00000811
 
         def __init__(self, reader):
-            self.name_offset = BfresOffset(reader)
+            self.name_offset = BfresNameOffset(reader)
             index_and_offset = reader.read_uint32() # XXYYYYYY, where X is the buffer index and Y the offset.
             self.buffer_index = index_and_offset >> 24 # The index of the buffer containing this attrib.
             self.element_offset = index_and_offset & 0x00FFFFFF # Offset in each element.
@@ -145,6 +149,7 @@ class FvtxSubsection:
 
     def __init__(self, reader):
         self.header = self.Header(reader)
+        Log.write(2, "FVTX")
         # Load the attribute index group.
         current_pos = reader.tell()
         reader.seek(self.header.attribute_index_group_offset.to_file)
@@ -238,22 +243,23 @@ class FshpSubsection:
 
     def __init__(self, reader):
         self.header = self.Header(reader)
+        Log.write(2, "FSHP " + self.header.name_offset.name)
         # Load the LoD model array.
         reader.seek(self.header.lod_array_offset.to_file)
         self.lod_models = []
         for i in range(0, self.header.lod_count):
             self.lod_models.append(self.LodModel(reader))
-        # Load the visibility group tree nodes.
+        # Load the visibility group tree node array.
         reader.seek(self.header.visibility_group_tree_nodes_offset.to_file)
         self.visibility_group_tree_nodes = []
         for i in range(0, self.header.visibility_group_tree_node_count):
             self.visibility_group_tree_nodes.append(self.VisibilityGroupTreeNode(reader))
-        # Load the visibility group tree ranges.
+        # Load the visibility group tree range array.
         reader.seek(self.header.visibility_group_tree_ranges_offset.to_file)
         self.visibility_group_tree_ranges = []
         for i in range(0, self.header.visibility_group_tree_node_count):
             self.visibility_group_tree_ranges.append(self.VisibilityGroupTreeRange(reader))
-        # Load the visibility group tree indices.
+        # Load the visibility group tree index array.
         reader.seek(self.header.visibility_group_tree_indices_offset.to_file)
         # Count might be incorrect, wiki says it is number of visibility groups of FSHP, but which LoD model?
         self.visibility_group_tree_indices = reader.read_uint16s(self.header.visibility_group_tree_node_count)
@@ -390,6 +396,7 @@ class FmatSubsection:
 
     def __init__(self, reader):
         self.header = self.Header(reader)
+        Log.write(2, "FMAT " + self.header.name_offset.name)
         # Load the render parameter index group.
         reader.seek(self.header.render_param_index_group_offset.to_file)
         self.render_param_index_group = IndexGroup(reader, lambda r: self.RenderParameter(reader))

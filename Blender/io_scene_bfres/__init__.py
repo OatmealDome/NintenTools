@@ -12,6 +12,9 @@ bl_info = {
 # Reload the classes when reloading add-ons in Blender with F8.
 if "bpy" in locals():
     import importlib
+    if "log" in locals():
+        print("Reloading: " + str(log))
+        importlib.reload(log)
     if "binary_io" in locals():
         print("Reloading: " + str(binary_io))
         importlib.reload(binary_io)
@@ -35,6 +38,7 @@ if "bpy" in locals():
         importlib.reload(importing)
 
 import bpy
+from . import log
 from . import binary_io
 from . import bfres_common
 from . import bfres_fmdl

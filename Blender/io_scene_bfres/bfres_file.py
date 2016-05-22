@@ -1,4 +1,5 @@
 import enum
+from .log import Log
 from .binary_io import BinaryReader
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 from .bfres_fmdl import FmdlSection
@@ -122,6 +123,7 @@ class BfresFile:
         reader.endianness = ">"
         # Read the header.
         self.header = self.Header(reader)
+        Log.write(0, "FRES " + self.header.file_name_offset.name)
         # Load the typed data referenced by the specific index groups, if present.
         for i in range(0, self.Header.INDEX_GROUP_COUNT):
             offset = self.header.index_group_offsets[i]
