@@ -5,25 +5,53 @@ from .bfres_fmdl import FmdlSection
 
 '''
 Hierarchically visualized, the layout of a BFRES file is as follows:
-- BFRES
+- BFRES File
+  - String Table
   - 12 Index Groups
     - Index Group 0
-      - FMDL[] (mostly only 1 of these)
-        - FSKL
+      - FMDL[] (Models, mostly only 1 of these)
+        - FSKL (Skeleton)
           - Bones[]
-        - FVTX[]
+        - FVTX[] (Vertex Buffers)
           - Attributes[] (referencing the buffer in which they are in)
           - Buffers[]
-        - FSHP[]
+        - FSHP[] (Polygons)
           - LoD Models[] (probably one when multiple visiblity groups)
             - Visibility Groups[] (index buffer slices, probably one when multiple LoD models)
             - Index Buffer
           - Visibility Group Tree (Nodes[], Ranges[], Indices[], unknown purpose)
-        - ...
+        - FMAT[] (Materials)
+          - Render Parameters[]
+          - Material Structure (unknown purpose)
+          - Shader Control
+          - Texture Selectors[]
+          - Texture Attribute Selectors[]
+          - Material Parameters[]
+          - Shadow Parameters[]
+        - Parameters[]
     - Index Group 1
-      - FTEX[]
-    - ...
-  - String Table
+      - FTEX[] (Texture Data)
+        - ...
+    - Index Group 2
+      - FSKA[] (Skeleton Animations)
+        - ?
+    - Index Group 3, 4, 5
+      - FSHU[] (Unknown Purpose)
+        - ?
+    - Index Group 6
+      - FTXP[] (Texture Pattern Animations)
+        - ?
+    - Index Group 7, 8
+      - FVIS[] (Bone Visibility)
+        - ?
+    - Index Group 9
+      - FSHA[] (Unknown Purpose)
+    - Index Group 10
+      - FSCN[] (Scene Data, Unknown Purpose)
+        - ?
+    - Index Group 11
+      - Embedded Files[]
+        - Raw Data (pointed to by offset and length pairs, partially shader code)
 
 However, this is just a silly simplification. The BFRES file is by far not as sequential as expectable from the layout
 given above. Actually, the headers of the specific sections just point around in the file (relative to themselves, not
@@ -33,6 +61,7 @@ the file), and strings are globally collected in a file-wide string table. Data 
 - Headers of the sections referenced by the Index Groups
 - String Table
 - Data referenced by the section and subsection headers
+- Embedded File data
 This order was probably chosen to keep graphical data together, so it can be uploaded to the GPU in one step, while data
 which needs CPU access is stored in the bunch of headers and tables at the beginning of the file.
 

@@ -31,6 +31,9 @@ class BinaryReader:
     def read_int32(self):
         return struct.unpack(self.endianness + "i", self.reader.read(4))[0]
 
+    def read_sbyte(self):
+        return struct.unpack(self.endianness + "b", self.reader.read(1))[0]
+
     def read_single(self):
         return struct.unpack(self.endianness + "f", self.reader.read(4))[0]
 
@@ -42,6 +45,9 @@ class BinaryReader:
 
     def read_uint32(self):
         return struct.unpack(self.endianness + "I", self.reader.read(4))[0]
+
+    def read_uint32s(self, count):
+        return struct.unpack(self.endianness + str(int(count)) + "I", self.reader.read(4 * count))
 
     def read_matrix3x3(self):
         matrix = mathutils.Matrix()
