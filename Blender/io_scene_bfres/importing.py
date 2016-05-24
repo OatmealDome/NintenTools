@@ -39,14 +39,25 @@ class Importer:
         self.filepath = filepath
         self.file_ext = os.path.splitext(self.filepath)[1].upper()
         self.directory = os.path.dirname(self.filepath)
-        self.bfres_file = None
 
     def run(self):
         # Ensure to have a stream with decompressed data.
         if self.file_ext == ".SZS":
-            raw = Yaz0Compression.decompress(open(self.filepath, "rb"))
+            raw = io.BytesIO(Yaz0Compression.decompress(open(self.filepath, "rb")))
         else:
             raw = open(self.filepath, "rb")
-        self.bfres_file = BfresFile(raw)
-        # TODO: Now import the loaded data to blender.
+        bfres_file = BfresFile(raw)
+        raw.close()
+        # Import the data into Blender objects.
+        self._convert_bfres(bfres_file)
         return {"FINISHED"}
+
+    def _convert_bfres(self, bfres):
+        # Go through the FMDL sections which map to a Blender object.
+        for fmdl_node in bfres.fmdl_index_group.nodes[1:]:
+            self._convert_fmdl(bfres, fmdl_node.data)
+
+    def _convert_fmdl(self, bfres, fmdl):
+        # Create an object for this FMDL in the current scene.
+        obj = bpy.data.objects.new(fmdl.header.file_name_offset.name, None)
+        bpy.context.scene.objects.link(obj)

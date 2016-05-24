@@ -12,41 +12,49 @@ class Yaz0Compression:
             raise AssertionError("Invalid Yaz0 header.")
         decompressed_size = struct.unpack(">I", compressed.read(4))[0]
         compressed.seek(8, io.SEEK_CUR) # Padding
-        # Use an in-memory stream and open a reader/writer on it to decompress in.
-        decompressed = io.BytesIO() # obviously we cannot "pre-allocate" the memory.
-        # Decompress the data.
-        decompressed_bytes = 0
-        while decompressed_bytes < decompressed_size:
+        # Decompress the data into an array. Cache methods to avoid looking them up in the loop.
+        decompressed = bytearray()
+        _divmod = divmod
+        _read = compressed.read
+        _read_uint16 = Yaz0Compression._read_uint16
+        _append = decompressed.append
+        _extend = decompressed.extend
+        while len(decompressed) < decompressed_size:
             # Read the configuration byte of a decompression setting group, and go through each bit of it.
-            group_config = compressed.read(1)[0]
-            for i in range(7, -1, -1):
+            group_config = _read(1)[0]
+            for i in (128, 64, 32, 16, 8, 4, 2, 1):
                 # Check if the bit of the current chunk is set.
-                if group_config & (1 << i) == 1 << i:
+                if group_config & i:
                     # Bit is set, copy 1 raw byte to the output.
-                    decompressed.write(compressed.read(1))
-                    decompressed_bytes += 1
-                elif decompressed_bytes < decompressed_size: # This does not make sense for the last byte.
+                    _extend(_read(1))
+                elif len(decompressed) < decompressed_size: # This does not make sense for the last byte.
                     # Bit is not set and data copying configuration follows, either 2 or 3 bytes long.
-                    data_back_seek_offset = struct.unpack(">H", compressed.read(2))[0]
-                    # If the nibble of the first back seek offset byte is 0, the config is 3 bytes long.
-                    nibble = data_back_seek_offset >> 12 # 1 byte (8 bits) + 1 nibble (4 bits)
-                    if nibble:
-                        # Nibble is not 0, and determines (size + 0x02) of bytes to read.
-                        data_size = nibble + 0x02
-                        # Remaining bits are the real back seek offset
-                        data_back_seek_offset &= 0x0FFF
+                    offset = _read_uint16(compressed)
+                    # If the nibble of the first back byte of offset is 0, the config is 3 bytes long.
+                    if offset > 4095:
+                        # Nibble is not 0, determining nibble + 0x02 bytes to read, the remainder being the real offset.
+                        data_size = (offset >> 12) + 0x02
+                        offset &= 0x0FFF
                     else:
-                        # Nibble is 0, the number of bytes to read is in third byte, which is (size + 0x12).
-                        data_size = compressed.read(1)[0] + 0x12
-                    # Since bytes can be re-read right after they were written, write and read bytes one by one.
-                    for j in range(0, data_size):
-                        # Read one byte from the current back seek position.
-                        decompressed.seek(-data_back_seek_offset - 1, io.SEEK_CUR)
-                        read_byte = decompressed.read(1)
-                        # Write the byte to the end of the memory stream.
-                        decompressed.seek(0, io.SEEK_END)
-                        decompressed.write(read_byte)
-                        decompressed_bytes += 1
-        # Seek back to the start of the in-memory stream and return it.
-        decompressed.seek(0)
+                        # Nibble is 0, the number of bytes to read is in third byte, which is size + 0x12.
+                        data_size = _read(1)[0] + 0x12
+                    # Append bytes from the current offset.
+                    offset += 1
+                    if data_size == offset:
+                        chunk = decompressed[-offset:]
+                    elif data_size < offset:
+                        chunk = decompressed[-offset:data_size - offset]
+                    else:
+                        copies, remainder = _divmod(data_size, offset)
+                        chunk = decompressed[-offset:] * copies
+                        if remainder:
+                            chunk += decompressed[-offset:-offset + remainder]
+                    _extend(chunk)
+        # Return the decompressed data.
         return decompressed
+
+    @staticmethod
+    def _read_uint16(file):
+        # Faster than struct.unpack.
+        buffer = file.read(2)
+        return (buffer[0] << 8) + buffer[1]

@@ -4,17 +4,21 @@ import struct
 
 class BinaryReader:
     def __init__(self, raw):
-        self.reader = io.BufferedReader(raw)
+        self.raw = raw
         self.endianness = "<" # Little-endian
+
+    def __enter__(self):
+        self.reader = io.BufferedReader(self.raw)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.reader.close()
 
     def seek(self, offset, whence=io.SEEK_SET):
         self.reader.seek(offset, whence)
 
     def tell(self):
         return self.reader.tell()
-
-    def close(self):
-        self.reader.close()
 
     def read_byte(self):
         return self.reader.read(1)[0]

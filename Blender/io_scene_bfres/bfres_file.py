@@ -119,20 +119,20 @@ class BfresFile:
 
     def __init__(self, raw):
         # Open a big-endian binary reader on the stream.
-        reader = BinaryReader(raw)
-        reader.endianness = ">"
-        # Read the header.
-        self.header = self.Header(reader)
-        Log.write(0, "FRES " + self.header.file_name_offset.name)
-        # Load the typed data referenced by the specific index groups, if present.
-        for i in range(0, self.Header.INDEX_GROUP_COUNT):
-            offset = self.header.index_group_offsets[i]
-            if offset:
-                reader.seek(offset.to_file)
-                if i == self.IndexGroupType.Fmdl0:
-                    self.fmdl_index_group = IndexGroup(reader, lambda r: FmdlSection(r))
-                elif i == self.IndexGroupType.Ftex1:
-                    self.ftex_index_group = IndexGroup(reader, lambda r: FtexSection(r))
-                elif i == self.IndexGroupType.EmbeddedFile11:
-                    self.embedded_file_index_group = IndexGroup(reader, lambda r: EmbeddedFile(r))
-                # TODO: Read other index group types.
+        with BinaryReader(raw) as reader:
+            reader.endianness = ">"
+            # Read the header.
+            self.header = self.Header(reader)
+            Log.write(0, "FRES " + self.header.file_name_offset.name)
+            # Load the typed data referenced by the specific index groups, if present.
+            for i in range(0, self.Header.INDEX_GROUP_COUNT):
+                offset = self.header.index_group_offsets[i]
+                if offset:
+                    reader.seek(offset.to_file)
+                    if i == self.IndexGroupType.Fmdl0:
+                        self.fmdl_index_group = IndexGroup(reader, lambda r: FmdlSection(r))
+                    elif i == self.IndexGroupType.Ftex1:
+                        self.ftex_index_group = IndexGroup(reader, lambda r: FtexSection(r))
+                    elif i == self.IndexGroupType.EmbeddedFile11:
+                        self.embedded_file_index_group = IndexGroup(reader, lambda r: EmbeddedFile(r))
+                    # TODO: Read other index group types.
