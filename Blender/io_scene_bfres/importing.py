@@ -54,10 +54,16 @@ class Importer:
 
     def _convert_bfres(self, bfres):
         # Go through the FMDL sections which map to a Blender object.
-        for fmdl_node in bfres.fmdl_index_group.nodes[1:]:
+        for fmdl_node in bfres.fmdl_index_group[1:]:
             self._convert_fmdl(bfres, fmdl_node.data)
 
     def _convert_fmdl(self, bfres, fmdl):
         # Create an object for this FMDL in the current scene.
         obj = bpy.data.objects.new(fmdl.header.file_name_offset.name, None)
         bpy.context.scene.objects.link(obj)
+        # Go through the polygons in this model.
+        for fshp_node in fmdl.fshp_index_group[1:]:
+            self._convert_fshp(bfres, fmdl, fshp_node.data)
+
+    def _convert_fshp(self, bfres, fmdl, fshp):
+        pass

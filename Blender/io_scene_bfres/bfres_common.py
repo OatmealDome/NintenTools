@@ -59,3 +59,11 @@ class IndexGroup:
                 if node.data_offset == item:
                     return node
             raise KeyError("Did not find a node with the given data offset.")
+        else:
+            return self.nodes.__getitem__(item)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.nodes.__next__()

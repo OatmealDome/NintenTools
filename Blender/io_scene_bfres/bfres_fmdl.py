@@ -2,6 +2,18 @@ import enum
 from .log import Log
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 
+'''
+To build the vertices of an FMDL model, the following steps have to be done:
+- Go through each FSHP (a polygon referencing its vertex buffer) and create a bmesh for it.
+- Get a range of indices in the index buffer references by the FSHP. The range is specified by the visiblity group of a
+  LoD model (there should be only one, the most detailled one, we care about). Careful: The range offset is in bytes,
+  the indices are 16-bit, so divide by 2 to get the array offset.
+- The slice of indices reference vertices in the FVTX buffer.
+- Get the FVTX with the index in the FSHP header (same as the index of the FSHP in the FSHP index group for MK8).
+- Get all vertices from the FVTX buffer (array of custom structure with position / UV / whatever attributes specify).
+- Iterate through the indices, getting the corresponding vertices, and feed them to Blender.
+'''
+
 class FmdlSection:
     class Header:
         def __init__(self, reader):
