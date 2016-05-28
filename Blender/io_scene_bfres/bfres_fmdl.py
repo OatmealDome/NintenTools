@@ -137,7 +137,10 @@ class FvtxSubsection:
             self.buffer_index = index_and_offset >> 24 # The index of the buffer containing this attrib.
             self.element_offset = index_and_offset & 0x00FFFFFF # Offset in each element.
             self.format = reader.read_uint32()
-            self.parser = self._parsers[self.format]
+            # Get a method parsing this attribute format.
+            self.parser = self._parsers.get(self.format, None)
+            #if not self.parser:
+                #raise NotImplementedError("Attribute " + self.name_offset.name + ": unknown format " + str(self.format))
 
         def _parse_2x_8bit_normalized(self, buffer, offset):
             offset += self.element_offset
@@ -145,16 +148,19 @@ class FvtxSubsection:
 
         def _parse_2x_16bit_normalized(self, buffer, offset):
             offset += self.element_offset
-            values = struct.unpack(">2H", buffer.data[offset:offset + 4])
-            return values[0] / 0xFFFF, values[1] / 0xFFFF
+            return (x / 0xFFFF for x in struct.unpack(">2H", buffer.data[offset:offset + 4]))
+
+        def _parse_1x_8bit(self, buffer, offset):
+            offset += self.element_offset
+            return buffer.data[offset]
 
         def _parse_4x_8bit(self, buffer, offset):
             offset += self.element_offset
             return struct.unpack(">4B", buffer.data[offset:offset + 4])
 
-        def _parse_1x_8bit(self, buffer, offset):
+        def _parse_2x_16bit_short_as_float(self, buffer, offset):
             offset += self.element_offset
-            return buffer.data[offset]
+            return (x / 0x7FFF for x in struct.unpack(">2H", buffer.data[offset:offset + 4]))
 
         def _parse_4x_8bit_signed(self, buffer, offset):
             offset += self.element_offset
@@ -172,13 +178,17 @@ class FvtxSubsection:
             z = ((integer & 0x000003FC) >>  2) / 511
             return x, y, z
 
+        def _parse_2x_16bit_float(self, buffer, offset):
+            offset += self.element_offset
+            return (float(x) for x in numpy.frombuffer(buffer.data, ">f2", 2, offset))
+
         def _parse_2x_32bit_float(self, buffer, offset):
             offset += self.element_offset
             return struct.unpack(">2f", buffer.data[offset:offset + 8])
 
         def _parse_4x_16bit_float(self, buffer, offset):
             offset += self.element_offset
-            return numpy.frombuffer(buffer.data[offset:offset + 4], dtype=numpy.float16)[0] # TODO: Is this big endian?
+            return (float(x) for x in numpy.frombuffer(buffer.data, ">f2", 4, offset))
 
         def _parse_3x_32bit_float(self, buffer, offset):
             offset += self.element_offset
@@ -190,8 +200,10 @@ class FvtxSubsection:
             0x0000000a: _parse_4x_8bit,
             0x00000100: _parse_1x_8bit,
             0x0000010a: _parse_4x_8bit,
+            0x00000207: _parse_2x_16bit_short_as_float,
             0x0000020a: _parse_4x_8bit_signed,
             0x0000020b: _parse_3x_10bit_signed,
+            0x00000808: _parse_2x_16bit_float,
             0x0000080d: _parse_2x_32bit_float,
             0x0000080f: _parse_4x_16bit_float,
             0x00000811: _parse_3x_32bit_float

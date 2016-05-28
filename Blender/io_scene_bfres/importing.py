@@ -66,9 +66,26 @@ class Importer:
             self._convert_fshp(bfres, fmdl, obj, fshp_node.data)
 
     def _convert_fshp(self, bfres, fmdl, fmdl_obj, fshp):
-        # Get the most detailled LoD model.
+        # Get the indices and vertices of the most detailled LoD model.
         lod_model = fshp.lod_models[0]
-        # Get the indices of the first visibility group.
         indices = lod_model.get_indices_for_visibility_group(0)
-        # Get the vertex buffer holding the data referenced by the indices.
         vertices = fmdl.fvtx_array[fshp.header.buffer_index].get_vertices()
+        # Create a mesh and a bmesh of it as the child of the parent object.
+        mesh = bpy.data.meshes.new(fshp.header.name_offset.name)
+        bm = bmesh.new()
+        bm.from_mesh(mesh)
+        # Go through the indices and add the referenced vertices to the bmesh.
+        for i in indices:
+            vertex = vertices[i]
+            bm.verts.new(vertex.p0)
+        # Connect the faces, as they are organized as a triangle list.
+        bm.verts.ensure_lookup_table() # Required since 2.73 before accessing vertices with index.
+        for i in range(0, len(indices), 3):
+            bm.faces.new((bm.verts[j] for j in range(i, i + 3)))
+        # Write the bmesh data back to the mesh.
+        bm.to_mesh(mesh)
+        bm.free()
+        # Create an object to represent the mesh with.
+        fshp_obj = bpy.data.objects.new(mesh.name, mesh)
+        #fshp_obj.parent = fmdl_obj
+        bpy.context.scene.objects.link(fshp_obj)

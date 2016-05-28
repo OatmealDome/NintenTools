@@ -64,6 +64,3 @@ class IndexGroup:
 
     def __iter__(self):
         return iter(self.nodes)
-
-    #def __next__(self):
-    #    return iter(self.nodes)
