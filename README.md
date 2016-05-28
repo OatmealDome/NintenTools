@@ -9,7 +9,7 @@ Usage
 
 Right now, the following usage cases are possible:
 - Load and inspect BFRES files.
-- C# Library: Decompress Yaz0 files.
+- Decompress Yaz0 files.
 - C# "Test" tool: Validates BFRES with researched details. It prints any assumptions not met as a warning.
 
 Contributing
