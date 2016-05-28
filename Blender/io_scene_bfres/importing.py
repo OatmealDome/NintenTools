@@ -63,7 +63,12 @@ class Importer:
         bpy.context.scene.objects.link(obj)
         # Go through the polygons in this model.
         for fshp_node in fmdl.fshp_index_group[1:]:
-            self._convert_fshp(bfres, fmdl, fshp_node.data)
+            self._convert_fshp(bfres, fmdl, obj, fshp_node.data)
 
-    def _convert_fshp(self, bfres, fmdl, fshp):
-        pass
+    def _convert_fshp(self, bfres, fmdl, fmdl_obj, fshp):
+        # Get the most detailled LoD model.
+        lod_model = fshp.lod_models[0]
+        # Get the indices of the first visibility group.
+        indices = lod_model.get_indices_for_visibility_group(0)
+        # Get the vertex buffer holding the data referenced by the indices.
+        vertices = fmdl.fvtx_array[fshp.header.buffer_index].get_vertices()

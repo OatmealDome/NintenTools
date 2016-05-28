@@ -1,16 +1,19 @@
 import enum
+import numpy
+import struct
 from .log import Log
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 
 '''
 To build the vertices of an FMDL model, the following steps have to be done:
 - Go through each FSHP (a polygon referencing its vertex buffer) and create a bmesh for it.
-- Get a range of indices in the index buffer references by the FSHP. The range is specified by the visiblity group of a
-  LoD model (there should be only one, the most detailled one, we care about). Careful: The range offset is in bytes,
-  the indices are 16-bit, so divide by 2 to get the array offset.
+- Get a range of indices in the index buffer referenced by the FSHP. The range is specified by the visiblity group of a
+  LoD model (there should be only one we care about, the most detailled one).
+  > FshpSubsection.LodModel.get_indices_from_visibility_group(visibility_group_index)
 - The slice of indices reference vertices in the FVTX buffer.
 - Get the FVTX with the index in the FSHP header (same as the index of the FSHP in the FSHP index group for MK8).
 - Get all vertices from the FVTX buffer (array of custom structure with position / UV / whatever attributes specify).
+  > FvtxSubsection.get_vertices()
 - Iterate through the indices, getting the corresponding vertices, and feed them to Blender.
 '''
 
@@ -128,28 +131,78 @@ class FvtxSubsection:
             self.padding = reader.read_uint32() # 0x00000000
 
     class Attribute:
-        class Format(enum.IntEnum):
-            Two8BitNormalized  = 0x00000004
-            Two16BitNormalized = 0x00000007
-            Four8BitSigned     = 0x0000020a
-            Three10BitSigned   = 0x0000020b
-            Two32BitFloat      = 0x0000080d
-            Four16BitFloat     = 0x0000080f
-            Three32BitFloat    = 0x00000811
-
         def __init__(self, reader):
             self.name_offset = BfresNameOffset(reader)
             index_and_offset = reader.read_uint32() # XXYYYYYY, where X is the buffer index and Y the offset.
             self.buffer_index = index_and_offset >> 24 # The index of the buffer containing this attrib.
             self.element_offset = index_and_offset & 0x00FFFFFF # Offset in each element.
             self.format = reader.read_uint32()
+            self.parser = self._parsers[self.format]
+
+        def _parse_2x_8bit_normalized(self, buffer, offset):
+            offset += self.element_offset
+            return buffer.data[offset] / 0xFF, buffer.data[offset + 1] / 0xFF
+
+        def _parse_2x_16bit_normalized(self, buffer, offset):
+            offset += self.element_offset
+            values = struct.unpack(">2H", buffer.data[offset:offset + 4])
+            return values[0] / 0xFFFF, values[1] / 0xFFFF
+
+        def _parse_4x_8bit(self, buffer, offset):
+            offset += self.element_offset
+            return struct.unpack(">4B", buffer.data[offset:offset + 4])
+
+        def _parse_1x_8bit(self, buffer, offset):
+            offset += self.element_offset
+            return buffer.data[offset]
+
+        def _parse_4x_8bit_signed(self, buffer, offset):
+            offset += self.element_offset
+            return struct.unpack(">4b", buffer.data[offset:offset + 4])
+
+        def _parse_3x_10bit_signed(self, buffer, offset):
+            offset += self.element_offset
+            integer = struct.unpack(">I", buffer.data[offset:offset + 4])[0]
+            # 8-bit values are aligned in 'integer' as follows:
+            #   Bit: 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32
+            # Value:  0  1  x  x  x  x  x  x  x  x  0  1  y  y  y  y  y  y  y  y  0  1  z  z  z  z  z  z  z  z  0  0
+            # Those are then divided by 511 to retrieve the decimal value.
+            x = ((integer & 0x3FC00000) >> 22) / 511
+            y = ((integer & 0x000FF000) >> 12) / 511
+            z = ((integer & 0x000003FC) >>  2) / 511
+            return x, y, z
+
+        def _parse_2x_32bit_float(self, buffer, offset):
+            offset += self.element_offset
+            return struct.unpack(">2f", buffer.data[offset:offset + 8])
+
+        def _parse_4x_16bit_float(self, buffer, offset):
+            offset += self.element_offset
+            return numpy.frombuffer(buffer.data[offset:offset + 4], dtype=numpy.float16)[0] # TODO: Is this big endian?
+
+        def _parse_3x_32bit_float(self, buffer, offset):
+            offset += self.element_offset
+            return struct.unpack(">3f", buffer.data[offset:offset + 12])
+
+        _parsers = {
+            0x00000004: _parse_2x_8bit_normalized,
+            0x00000007: _parse_2x_16bit_normalized,
+            0x0000000a: _parse_4x_8bit,
+            0x00000100: _parse_1x_8bit,
+            0x0000010a: _parse_4x_8bit,
+            0x0000020a: _parse_4x_8bit_signed,
+            0x0000020b: _parse_3x_10bit_signed,
+            0x0000080d: _parse_2x_32bit_float,
+            0x0000080f: _parse_4x_16bit_float,
+            0x00000811: _parse_3x_32bit_float
+        }
 
     class Buffer:
         def __init__(self, reader):
             self.unknown0x00 = reader.read_uint32() # 0x00000000
             self.size_in_bytes = reader.read_uint32()
             self.unknown0x08 = reader.read_uint32() # 0x00000000
-            self.stride = reader.read_uint16() # Size of each element in the buffer
+            self.stride = reader.read_uint16() # Size of each element in the buffer.
             self.unknown0x0e = reader.read_uint16() # 0x0001
             self.unknown0x10 = reader.read_uint32() # 0x00000000
             self.data_offset = BfresOffset(reader)
@@ -158,6 +211,22 @@ class FvtxSubsection:
             reader.seek(self.data_offset.to_file)
             self.data = reader.read_bytes(self.size_in_bytes)
             reader.seek(current_pos)
+
+    class Vertex:
+        def __init__(self):
+            # Member names must be kept as they allow a simple mapping in self.get_vertices().
+            self.p0 = None # Position
+            self.n0 = None # Normal
+            self.t0 = None # Tangent, lighting calculation
+            self.b0 = None # Binormal, lighting calculation
+            self.w0 = None # Blend weight, unknown purpose
+            self.i0 = None # Blend index, unknown purpose
+            self.u0 = None # UV texture coordinate layer 1
+            self.u1 = None # UV texture coordinate layer 2
+            self.u2 = None # UV texture coordinate layer 3
+            self.u3 = None # UV texture coordinate layer 4
+            self.c0 = None # Color for shadow mapping
+            self.c1 = None # Color for shadow mapping
 
     def __init__(self, reader):
         self.header = self.Header(reader)
@@ -174,6 +243,18 @@ class FvtxSubsection:
         # Seek back as FVTX headers are read as an array.
         reader.seek(current_pos)
 
+    def get_vertices(self):
+        # Create an array of empty vertex instances.
+        vertices = [self.Vertex() for i in range(0, self.header.vertex_count)]
+        # Get the data by attributes, as the data can be separated into different data arrays.
+        for attribute_node in self.attribute_index_group[1:]:
+            attribute = attribute_node.data
+            vertex_member = attribute.name_offset.name[1:] # Remove the underscore of the attribute name.
+            buffer = self.buffers[attribute.buffer_index]
+            for i, offset in enumerate(range(0, buffer.size_in_bytes, buffer.stride)):
+                setattr(vertices[i], vertex_member, attribute.parser(attribute, buffer, offset))
+        return vertices
+
 class FshpSubsection:
     class Header:
         def __init__(self, reader):
@@ -184,7 +265,7 @@ class FshpSubsection:
             self.index = reader.read_uint16() # The index in the FMDL FSHP index group.
             self.material_index = reader.read_uint16() # The index of the FMAT material for this polygon.
             self.bone_index = reader.read_uint16() # The index of the bone this polygon is transformed with.
-            self.section_index = reader.read_uint16() # Same as index in MK8.
+            self.buffer_index = reader.read_uint16() # Same as self.index in MK8.
             self.fskl_index_array_count = reader.read_uint16() # Often 0x0000, unknown purpose, related to FSKL.
             self.unknown0x16 = reader.read_byte() # Tends to be 0x00 if fskl_index_array_count is 0x0000.
             self.lod_count = reader.read_byte()
@@ -238,6 +319,10 @@ class FshpSubsection:
             self.index_buffer = self.IndexBuffer(reader)
             # Seek back as multiple LoD models are stored in an array.
             reader.seek(current_pos)
+
+        def get_indices_for_visibility_group(self, visibility_group_index):
+            visibility_group = self.visibility_groups[visibility_group_index]
+            return self.index_buffer.indices[visibility_group.index_byte_offset // 2:visibility_group.index_count]
 
     class VisibilityGroupTreeNode:
         def __init__(self, reader):
