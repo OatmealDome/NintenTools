@@ -87,5 +87,5 @@ class Importer:
         bm.free()
         # Create an object to represent the mesh with.
         fshp_obj = bpy.data.objects.new(mesh.name, mesh)
-        #fshp_obj.parent = fmdl_obj
+        fshp_obj.parent = fmdl_obj
         bpy.context.scene.objects.link(fshp_obj)
