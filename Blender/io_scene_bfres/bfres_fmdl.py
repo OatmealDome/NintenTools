@@ -314,7 +314,7 @@ class FshpSubsection:
         def __init__(self, reader):
             self.unknown0x00 = reader.read_uint32() # 0x00000004
             self.unknown0x04 = reader.read_uint32() # 0x00000004
-            self.point_draw_count = reader.read_uint32()
+            self.total_index_count = reader.read_uint32()
             self.visibility_group_count = reader.read_uint16()
             self.unknown0x0e = reader.read_uint16() # 0x0000
             self.visibility_group_offset = BfresOffset(reader)

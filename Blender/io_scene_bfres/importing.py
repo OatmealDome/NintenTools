@@ -66,22 +66,24 @@ class Importer:
             self._convert_fshp(bfres, fmdl, obj, fshp_node.data)
 
     def _convert_fshp(self, bfres, fmdl, fmdl_obj, fshp):
-        # Get the indices and vertices of the most detailled LoD model.
+        # Get the vertices and indices of the most detailled LoD model.
         lod_model = fshp.lod_models[0]
-        indices = lod_model.get_indices_for_visibility_group(0)
         vertices = fmdl.fvtx_array[fshp.header.buffer_index].get_vertices()
-        # Create a mesh and a bmesh of it as the child of the parent object.
+        indices = lod_model.get_indices_for_visibility_group(0)
+        # Create a mesh and a bmesh to represent the FSHP polygon.
         mesh = bpy.data.meshes.new(fshp.header.name_offset.name)
         bm = bmesh.new()
         bm.from_mesh(mesh)
-        # Go through the indices and add the referenced vertices to the bmesh.
-        for i in indices:
-            vertex = vertices[i]
+        # Go through the vertices (starting at the given offset) and add them to the bmesh.
+        # This would also add the vertices of all other LoD models. As there is no direct way to get the number of
+        # vertices required for the current LoD model (the game does not need that), get the last indexed one with max.
+        last_vertex = max(indices) + 1
+        for vertex in vertices[lod_model.skip_vertices:lod_model.skip_vertices + last_vertex]:
             bm.verts.new(vertex.p0)
-        # Connect the faces, as they are organized as a triangle list.
-        bm.verts.ensure_lookup_table() # Required since 2.73 before accessing vertices with index.
+        bm.verts.ensure_lookup_table() # Required after adding / removing vertices and before accessing them by index.
+        # Connect the faces, they are organized as a triangle list.
         for i in range(0, len(indices), 3):
-            bm.faces.new((bm.verts[j] for j in range(i, i + 3)))
+            bm.faces.new(bm.verts[j] for j in indices[i:i + 3])
         # Write the bmesh data back to the mesh.
         bm.to_mesh(mesh)
         bm.free()
