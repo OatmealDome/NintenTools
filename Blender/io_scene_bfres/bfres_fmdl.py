@@ -7,14 +7,14 @@ from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 '''
 To build the vertices of an FMDL model, the following steps have to be done:
 - Go through each FSHP (a polygon referencing its vertex buffer) and create a bmesh for it.
-- Get a range of indices in the index buffer referenced by the FSHP. The range is specified by the visiblity group of a
-  LoD model (there should be only one we care about, the most detailled one).
-  > FshpSubsection.LodModel.get_indices_from_visibility_group(visibility_group_index)
-- The slice of indices reference vertices in the FVTX buffer.
-- Get the FVTX with the index in the FSHP header (same as the index of the FSHP in the FSHP index group for MK8).
-- Get all vertices from the FVTX buffer (array of custom structure with position / UV / whatever attributes specify).
+- Get the FVTX vertex buffer used by that FSHP, referenced by index in the FSHP header.
+- Take the first LoD model of the FSHP which is the most detailled one.
+- Get the indices of the index buffer (ignore the visibility groups to import the whole model and not only parts).
+- To get only the vertices of the current LoD model, find the highest referenced vertex index by finding the biggest
+  value in the index buffer (this can be done only with max(indices) + 1, as the game does not need to care about this).
+- Retrieve the referenced vertices, make sure to add the LoD model offset to the vertex array index (skip_vertices).
   > FvtxSubsection.get_vertices()
-- Iterate through the indices, getting the corresponding vertices, and feed them to Blender.
+- Iterate through the vertices, connect faces referenced by the indices, and set up additional vertex data.
 '''
 
 class FmdlSection:
@@ -333,6 +333,7 @@ class FshpSubsection:
             reader.seek(current_pos)
 
         def get_indices_for_visibility_group(self, visibility_group_index):
+            # TODO: Want to ignore visibility groups at all later on, to import the whole model, not only parts.
             visibility_group = self.visibility_groups[visibility_group_index]
             return self.index_buffer.indices[visibility_group.index_byte_offset // 2:visibility_group.index_count]
 
