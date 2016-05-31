@@ -139,8 +139,8 @@ class FvtxSubsection:
             self.format = reader.read_uint32()
             # Get a method parsing this attribute format.
             self.parser = self._parsers.get(self.format, None)
-            #if not self.parser:
-                #raise NotImplementedError("Attribute " + self.name_offset.name + ": unknown format " + str(self.format))
+            if not self.parser:
+                raise NotImplementedError("Attribute " + self.name_offset.name + ": unknown format " + str(self.format))
 
         def _parse_2x_8bit_normalized(self, buffer, offset):
             offset += self.element_offset

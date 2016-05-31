@@ -79,11 +79,19 @@ class Importer:
         # vertices required for the current LoD model (the game does not need that), get the last indexed one with max.
         last_vertex = max(indices) + 1
         for vertex in vertices[lod_model.skip_vertices:lod_model.skip_vertices + last_vertex]:
-            bm.verts.new(vertex.p0)
+            bm_vert = bm.verts.new(vertex.p0)
+            #bm_vert.normal = vertex.n0 # TODO: Blender does not really support custom normals yet, and they look weird.
         bm.verts.ensure_lookup_table() # Required after adding / removing vertices and before accessing them by index.
+        bm.verts.index_update()  # Required to actually retrieve the indices later on (or they stay -1).
         # Connect the faces, they are organized as a triangle list.
         for i in range(0, len(indices), 3):
             bm.faces.new(bm.verts[j] for j in indices[i:i + 3])
+        # Set the UV coordinates by iterating through the face loops and getting their vertex' index.
+        uv_layer = bm.loops.layers.uv.new()
+        for face in bm.faces:
+            for loop in face.loops:
+                uv = vertices[loop.vert.index + lod_model.skip_vertices].u0
+                loop[uv_layer].uv = (uv[0], 1 - uv[1]) # Flip Y
         # Write the bmesh data back to the mesh.
         bm.to_mesh(mesh)
         bm.free()
