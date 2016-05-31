@@ -8,7 +8,8 @@ Usage
 =====
 
 Right now, the following usage cases are possible:
-- Load and inspect BFRES files.
+- Load and inspect the structure of BFRES files.
+- Import several models with positional und UV data (not all vertex formats are supported yet).
 - Decompress Yaz0 files.
 - C# "Test" tool: Validates BFRES with researched details. It prints any assumptions not met as a warning.
 
