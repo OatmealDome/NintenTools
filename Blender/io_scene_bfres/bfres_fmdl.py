@@ -1,4 +1,5 @@
 import enum
+import mathutils
 import numpy
 import struct
 from .log import Log
@@ -148,11 +149,16 @@ class FvtxSubsection:
 
         def _parse_2x_16bit_normalized(self, buffer, offset):
             offset += self.element_offset
-            return (x / 0xFFFF for x in struct.unpack(">2H", buffer.data[offset:offset + 4]))
+            values = struct.unpack(">2H", buffer.data[offset:offset + 4])
+            return tuple(x / 0xFFFF for x in values)
 
         def _parse_1x_8bit(self, buffer, offset):
             offset += self.element_offset
             return buffer.data[offset]
+
+        def _parse_2x_8bit(self, buffer, offset):
+            offset += self.element_offset
+            return struct.unpack(">2B", buffer.data[offset:offset + 2])
 
         def _parse_4x_8bit(self, buffer, offset):
             offset += self.element_offset
@@ -180,7 +186,7 @@ class FvtxSubsection:
 
         def _parse_2x_16bit_float(self, buffer, offset):
             offset += self.element_offset
-            return (float(x) for x in numpy.frombuffer(buffer.data, ">f2", 2, offset))
+            return numpy.frombuffer(buffer.data, ">f2", 2, offset)
 
         def _parse_2x_32bit_float(self, buffer, offset):
             offset += self.element_offset
@@ -188,7 +194,7 @@ class FvtxSubsection:
 
         def _parse_4x_16bit_float(self, buffer, offset):
             offset += self.element_offset
-            return (float(x) for x in numpy.frombuffer(buffer.data, ">f2", 4, offset))
+            return numpy.frombuffer(buffer.data, ">f2", 4, offset)
 
         def _parse_3x_32bit_float(self, buffer, offset):
             offset += self.element_offset
@@ -199,6 +205,7 @@ class FvtxSubsection:
             0x00000007: _parse_2x_16bit_normalized,
             0x0000000a: _parse_4x_8bit,
             0x00000100: _parse_1x_8bit,
+            0x00000104: _parse_2x_8bit,
             0x0000010a: _parse_4x_8bit,
             0x00000207: _parse_2x_16bit_short_as_float,
             0x0000020a: _parse_4x_8bit_signed,
@@ -412,11 +419,11 @@ class FmatSubsection:
             self.unknown0x03 = reader.read_byte() # 0x00
             self.variable_name_offset = BfresNameOffset(reader)
             # Read the value, depending on self.type.
-            if type == self.Type.Unknown8BytesNull:
+            if self.type == self.Type.Unknown8BytesNull:
                 self.value = reader.read_bytes(8)
-            elif type == self.Type.Unknown2Floats:
+            elif self.type == self.Type.Unknown2Floats:
                 self.value = reader.read_vector2f()
-            elif type == self.Type.StringOffset:
+            elif self.type == self.Type.StringOffset:
                 self.value = BfresNameOffset(reader)
 
     class MaterialStructure:
@@ -479,8 +486,8 @@ class FmatSubsection:
 
     class MaterialParameter:
         class Type(enum.IntEnum):
-            SInt32    = 0x04
-            Single    = 0x0c
+            Int32     = 0x04
+            Float     = 0x0c
             Vector2f  = 0x0d
             Vector3f  = 0x0e
             Vector4f  = 0x0f
@@ -489,7 +496,7 @@ class FmatSubsection:
         def __init__(self, reader):
             self.type = reader.read_byte() # self.Type
             self.size = reader.read_byte()
-            self.value_offset = reader.read_uint16() # Offset in the FMAT material parameter data block.
+            self.value_offset = reader.read_uint16() # Offset in the FMAT material parameter data array.
             self.unknown0x04 = reader.read_uint32() # 0xffffffff
             self.unknown0x08 = reader.read_uint32() # 0x00000000
             self.index = reader.read_uint16()
@@ -527,9 +534,25 @@ class FmatSubsection:
         # Load the material parameter index group.
         reader.seek(self.header.material_param_index_group_offset.to_file)
         self.material_param_index_group = IndexGroup(reader, lambda r: self.MaterialParameter(r))
-        # Load the material parameter value data block. TODO: Maybe read the values when reading parameters.
+        # Load the material parameter data array.
         reader.seek(self.header.material_param_data_offset.to_file)
         self.material_param_data = reader.read_bytes(self.header.material_param_data_size)
+        # Load the values of the material parameters stored in the material parameter data array.
+        for node in self.material_param_index_group[1:]:
+            material_param = node.data
+            offset = material_param.value_offset
+            if material_param.type == self.MaterialParameter.Type.Int32:
+                material_param.value = struct.unpack(">i", self.material_param_data[offset:offset + 4])[0]
+            elif material_param.type == self.MaterialParameter.Type.Float:
+                material_param.value = struct.unpack(">f", self.material_param_data[offset:offset + 4])[0]
+            elif material_param.type == self.MaterialParameter.Type.Vector2f:
+                material_param.value = struct.unpack(">2f", self.material_param_data[offset:offset + 2 * 4])
+            elif material_param.type == self.MaterialParameter.Type.Vector3f:
+                material_param.value = struct.unpack(">3f", self.material_param_data[offset:offset + 3 * 4])
+            elif material_param.type == self.MaterialParameter.Type.Vector4f:
+                material_param.value = struct.unpack(">4f", self.material_param_data[offset:offset + 4 * 4])
+            elif material_param.type == self.MaterialParameter.Type.Matrix2x3:
+                material_param.value = struct.unpack(">6f", self.material_param_data[offset:offset + 4 * 6])
         # Load the shadow parameter index group if it exists.
         if self.header.shadow_param_index_group_offset:
             reader.seek(self.header.shadow_param_index_group_offset.to_file)

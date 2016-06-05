@@ -79,7 +79,7 @@ class Importer:
         # vertices required for the current LoD model (the game does not need that), get the last indexed one with max.
         last_vertex = max(indices) + 1
         for vertex in vertices[lod_model.skip_vertices:lod_model.skip_vertices + last_vertex]:
-            bm_vert = bm.verts.new((vertex.p0[0], vertex.p0[2], vertex.p0[1])) # Exchange Y with Z axis.
+            bm_vert = bm.verts.new((vertex.p0[0], vertex.p0[2], vertex.p0[1])) # Exchange Y with Z
             #bm_vert.normal = vertex.n0 # TODO: Blender does not really support custom normals yet, and they look weird.
         bm.verts.ensure_lookup_table() # Required after adding / removing vertices and before accessing them by index.
         bm.verts.index_update()  # Required to actually retrieve the indices later on (or they stay -1).
