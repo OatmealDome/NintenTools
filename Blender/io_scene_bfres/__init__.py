@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Nintendo BFRES format",
     "author": "Ray Koopa",
-    "version": (16, 5, 22),
+    "version": (0, 1, 0),
     "blender": (2, 75, 0),
     "location": "File > Import-Export",
     "description": "Import-Export BFRES mesh, UV's, materials and textures",
@@ -50,6 +50,19 @@ from . import bfres_ftex
 from . import bfres_embedded
 from . import bfres_file
 from . import importing
+
+class BfresAddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __package__
+
+    tex_conv_path = bpy.props.StringProperty(
+        name='TexConv Path',
+        description='Path of the proprietary TexConv utility to convert textures with.',
+        subtype='FILE_PATH'
+    )
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, 'tex_conv_path')
 
 def register():
     bpy.utils.register_module(__name__)

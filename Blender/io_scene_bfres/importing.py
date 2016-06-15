@@ -22,6 +22,11 @@ class ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         maxlen=1024,
         default=""
     )
+    merge_seams = bpy.props.BoolProperty(
+        name="Merge Seam Vertices",
+        description="Remerge vertices which were split to create UV seams.",
+        default=True
+    )
 
     def execute(self, context):
         from . import importing
@@ -70,17 +75,15 @@ class Importer:
         lod_model = fshp.lod_models[0]
         vertices = fmdl.fvtx_array[fshp.header.buffer_index].get_vertices()
         indices = lod_model.get_indices_for_visibility_group(0)
-        # Create a mesh and a bmesh to represent the FSHP polygon.
-        mesh = bpy.data.meshes.new(fshp.header.name_offset.name)
+        # Create a bmesh to represent the FSHP polygon.
         bm = bmesh.new()
-        bm.from_mesh(mesh)
         # Go through the vertices (starting at the given offset) and add them to the bmesh.
         # This would also add the vertices of all other LoD models. As there is no direct way to get the number of
         # vertices required for the current LoD model (the game does not need that), get the last indexed one with max.
         last_vertex = max(indices) + 1
         for vertex in vertices[lod_model.skip_vertices:lod_model.skip_vertices + last_vertex]:
             bm_vert = bm.verts.new((vertex.p0[0], vertex.p0[2], vertex.p0[1])) # Exchange Y with Z
-            #bm_vert.normal = vertex.n0 # TODO: Blender does not really support custom normals yet, and they look weird.
+            #bm_vert.normal = vertex.n0 # Blender does not really support custom normals yet, and they look weird.
         bm.verts.ensure_lookup_table() # Required after adding / removing vertices and before accessing them by index.
         bm.verts.index_update()  # Required to actually retrieve the indices later on (or they stay -1).
         # Connect the faces, they are organized as a triangle list.
@@ -92,7 +95,11 @@ class Importer:
             for loop in face.loops:
                 uv = vertices[loop.vert.index + lod_model.skip_vertices].u0
                 loop[uv_layer].uv = (uv[0], 1 - uv[1]) # Flip Y
-        # Write the bmesh data back to the mesh.
+        # Optimize the mesh if wanted.
+        if self.operator.merge_seams:
+            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.005)
+        # Write the bmesh data back to a new mesh.
+        mesh = bpy.data.meshes.new(fshp.header.name_offset.name)
         bm.to_mesh(mesh)
         bm.free()
         # Create an object to represent the mesh with.

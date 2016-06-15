@@ -466,6 +466,7 @@ class FmatSubsection:
     class TextureSelector:
         def __init__(self, reader):
             self.name_offset = BfresNameOffset(reader) # Same as the FTEX name.
+            Log.write(3, "Texture " + self.name_offset.name)
             self.ftex_offset = BfresOffset(reader)
 
     class TextureAttributeSelector:
@@ -546,13 +547,13 @@ class FmatSubsection:
             elif material_param.type == self.MaterialParameter.Type.Float:
                 material_param.value = struct.unpack(">f", self.material_param_data[offset:offset + 4])[0]
             elif material_param.type == self.MaterialParameter.Type.Vector2f:
-                material_param.value = struct.unpack(">2f", self.material_param_data[offset:offset + 2 * 4])
+                material_param.value = struct.unpack(">2f", self.material_param_data[offset:offset + 8])
             elif material_param.type == self.MaterialParameter.Type.Vector3f:
-                material_param.value = struct.unpack(">3f", self.material_param_data[offset:offset + 3 * 4])
+                material_param.value = struct.unpack(">3f", self.material_param_data[offset:offset + 12])
             elif material_param.type == self.MaterialParameter.Type.Vector4f:
-                material_param.value = struct.unpack(">4f", self.material_param_data[offset:offset + 4 * 4])
+                material_param.value = struct.unpack(">4f", self.material_param_data[offset:offset + 16])
             elif material_param.type == self.MaterialParameter.Type.Matrix2x3:
-                material_param.value = struct.unpack(">6f", self.material_param_data[offset:offset + 4 * 6])
+                material_param.value = struct.unpack(">6f", self.material_param_data[offset:offset + 24])
         # Load the shadow parameter index group if it exists.
         if self.header.shadow_param_index_group_offset:
             reader.seek(self.header.shadow_param_index_group_offset.to_file)
