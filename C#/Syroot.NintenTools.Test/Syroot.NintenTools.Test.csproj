@@ -44,7 +44,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Syroot.NintenTools\Syroot.NintenTools.csproj">
       <Project>{35e9ddb2-59d4-4b41-b3cb-b659f7e0749d}</Project>
-      <Name>Vibeware.NintenTools</Name>
+      <Name>Syroot.NintenTools</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

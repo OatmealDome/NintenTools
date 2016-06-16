@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Syroot.NintenTools.Test", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Syroot.NintenTools.BfresConverter", "Syroot.NintenTools.BfresConverter\Syroot.NintenTools.BfresConverter.csproj", "{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Syroot.NintenTools.ObjInfoDumper", "Syroot.NintenTools.ObjInfoDumper\Syroot.NintenTools.ObjInfoDumper.csproj", "{4B4F63D6-444B-438B-B8CD-241207BF75C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B4F63D6-444B-438B-B8CD-241207BF75C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B4F63D6-444B-438B-B8CD-241207BF75C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B4F63D6-444B-438B-B8CD-241207BF75C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B4F63D6-444B-438B-B8CD-241207BF75C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

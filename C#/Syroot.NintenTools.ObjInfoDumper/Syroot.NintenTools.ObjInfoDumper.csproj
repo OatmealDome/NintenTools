@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{9454935B-07AC-4BBE-AF03-B3F2D295A6F7}</ProjectGuid>
+    <ProjectGuid>{4B4F63D6-444B-438B-B8CD-241207BF75C5}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Syroot.NintenTools.BfresConverter</RootNamespace>
-    <AssemblyName>BfresConverter</AssemblyName>
+    <RootNamespace>Syroot.NintenTools.ObjInfoDumper</RootNamespace>
+    <AssemblyName>Syroot.NintenTools.ObjInfoDumper</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -33,23 +33,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Converters\ModelConverterBase.cs" />
-    <Compile Include="Converters\ObjMtl\ObjMtlConverter.cs" />
+    <Compile Include="ObjFlowValue.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ConverterException.cs" />
-    <Compile Include="ReturnCode.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Properties\App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Syroot.NintenTools\Syroot.NintenTools.csproj">
-      <Project>{35e9ddb2-59d4-4b41-b3cb-b659f7e0749d}</Project>
-      <Name>Syroot.NintenTools</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
