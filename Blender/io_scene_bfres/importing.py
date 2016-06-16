@@ -83,12 +83,13 @@ class Importer:
         last_vertex = max(indices) + 1
         for vertex in vertices[lod_model.skip_vertices:lod_model.skip_vertices + last_vertex]:
             bm_vert = bm.verts.new((vertex.p0[0], vertex.p0[2], vertex.p0[1])) # Exchange Y with Z
-            #bm_vert.normal = vertex.n0 # Blender does not really support custom normals yet, and they look weird.
+            #bm_vert.normal = vertex.n0 # Blender does not correctly support custom normals, and they look weird.
         bm.verts.ensure_lookup_table() # Required after adding / removing vertices and before accessing them by index.
-        bm.verts.index_update()  # Required to actually retrieve the indices later on (or they stay -1).
-        # Connect the faces, they are organized as a triangle list.
+        bm.verts.index_update() # Required to actually retrieve the indices later on (or they stay -1).
+        # Connect the faces (they are organized as a triangle list) and smooth shade them.
         for i in range(0, len(indices), 3):
-            bm.faces.new(bm.verts[j] for j in indices[i:i + 3])
+            face = bm.faces.new(bm.verts[j] for j in indices[i:i + 3])
+            face.smooth = True
         # Set the UV coordinates by iterating through the face loops and getting their vertex' index.
         uv_layer = bm.loops.layers.uv.new()
         for face in bm.faces:
@@ -97,7 +98,7 @@ class Importer:
                 loop[uv_layer].uv = (uv[0], 1 - uv[1]) # Flip Y
         # Optimize the mesh if wanted.
         if self.operator.merge_seams:
-            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.005)
+            bmesh.ops.remove_doubles(bm, bm.verts, 0.0001)
         # Write the bmesh data back to a new mesh.
         mesh = bpy.data.meshes.new(fshp.header.name_offset.name)
         bm.to_mesh(mesh)
