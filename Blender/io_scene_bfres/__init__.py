@@ -29,7 +29,7 @@ if "bpy" in locals():
         importlib.reload(bfres_fmdl)
     if "bfres_ftex" in locals():
         print("Reloading: " + str(bfres_ftex))
-        importlib.reload(bfres_fmdl)
+        importlib.reload(bfres_ftex)
     if "bfres_embedded" in locals():
         print("Reloading: " + str(bfres_embedded))
         importlib.reload(bfres_embedded)

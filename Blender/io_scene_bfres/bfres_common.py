@@ -8,7 +8,7 @@ class BfresOffset:
         return self.to_self != 0
 
     def __eq__(self, other):
-        return isinstance(self.__class__, other) and self.to_self == other.to_self
+        return isinstance(other, self.__class__) and self.to_file == other.to_file
 
 class BfresNameOffset(BfresOffset):
     def __init__(self, reader):

@@ -1,4 +1,5 @@
 import enum
+from .binary_io import BinaryWriter
 from .bfres_common import BfresOffset, BfresNameOffset, IndexGroup
 
 class FtexSection:
@@ -143,11 +144,14 @@ class FtexSection:
             self.swizzle = reader.read_uint32()
             self.alignment = reader.read_uint32()
             self.pitch = reader.read_uint32()
-            self.unknown0x6c = reader.read_uint32s(27)
+            self.unknown0x44 = reader.read_uint32s(23)
+            self.unknown0xA0 = reader.read_uint32s(2)
+            self.file_name_offset = BfresNameOffset(reader)
+            self.mip_map_offset = reader.read_uint32()
             self.data_offset = BfresOffset(reader)
             self.mipmap_data_offset = BfresOffset(reader)
-            self.unknown0xb8 = reader.read_uint32() # Seem to change per file.
-            self.unknown0xbc = reader.read_uint32()
+            self.unknown0xb8 = reader.read_uint32() # Seems to change per file.
+            self.unknown0xbc = reader.read_uint32() # Seems to change per file.
 
     def __init__(self, reader):
         self.header = self.Header(reader)
@@ -157,3 +161,54 @@ class FtexSection:
         # Load the raw mipmap data.
         reader.seek(self.header.mipmap_data_offset.to_file)
         self.mipmap_data = reader.read_bytes(self.header.mipmap_data_size)
+
+    def export_gtx(self, stream):
+        # Reconstruct a GFX2 texture file from the FTEX section data.
+        with BinaryWriter(stream) as writer:
+            writer.endianness = ">" # Big-endian
+            # Write the header of the file.
+            writer.write_raw_string("Gfx2")
+            writer.write_int32(32) # Header size
+            writer.write_int32(7) # Major version
+            writer.write_int32(1) # Minor version
+            writer.write_int32(2) # GPU version
+            writer.write_int32(0) # Alignment mode
+            writer.write_int32(0) # Reserved1
+            writer.write_int32(0) # Reserved2
+            # Write the header of the first block.
+            self._export_gtx_block_header(writer, 156, 11)
+            writer.write_int32(self.header.dim)
+            writer.write_int32(self.header.width)
+            writer.write_int32(self.header.height)
+            writer.write_int32(self.header.depth)
+            writer.write_int32(self.header.mipmap_count)
+            writer.write_int32(self.header.format)
+            writer.write_int32(self.header.anti_alias_mode)
+            writer.write_int32(self.header.usage)
+            writer.write_int32(self.header.data_size)
+            writer.write_int32(self.header.unknown0x28)
+            writer.write_int32(self.header.mipmap_data_size)
+            writer.write_int32(self.header.unknown0x30)
+            writer.write_int32(self.header.tile_mode)
+            writer.write_int32(self.header.swizzle)
+            writer.write_int32(self.header.alignment)
+            writer.write_int32(self.header.pitch)
+            writer.write_int32s(self.header.unknown0x44)
+            # Write the header and data of the image block.
+            self._export_gtx_block_header(writer, self.header.data_size, 12)
+            writer.write_bytes(self.data)
+            # Write the header and data of the mipmap block.
+            self._export_gtx_block_header(writer, self.header.mipmap_data_size, 13)
+            writer.write_bytes(self.mipmap_data)
+            # Write the header and data of the terminating block.
+            self._export_gtx_block_header(writer, 0, 1)
+
+    def _export_gtx_block_header(self, writer, data_size, data_type):
+        writer.write_raw_string("BLK{")
+        writer.write_int32(32) # Header size
+        writer.write_int32(1) # Major version
+        writer.write_int32(0) # Minor version
+        writer.write_int32(data_type)
+        writer.write_int32(data_size)
+        writer.write_int32(0) # ID
+        writer.write_int32(0) # Type index
