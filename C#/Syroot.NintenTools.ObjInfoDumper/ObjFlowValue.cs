@@ -1,4 +1,6 @@
-﻿namespace Syroot.NintenTools.ObjInfoDumper
+﻿using System.Collections.Generic;
+
+namespace Syroot.NintenTools.ObjInfoDumper
 {
     internal class ObjFlowValue
     {
@@ -10,6 +12,6 @@
         internal int PathType { get; set; }
         internal bool VR { get; set; }
         internal string Label { get; set; }
-        internal string[] ResNames { get; set; }
+        internal List<string> ResNames { get; set; }
     }
 }
