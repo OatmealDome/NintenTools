@@ -3,6 +3,9 @@ import bpy
 import bpy_extras
 import io
 import os
+import subprocess
+from .log import Log
+from .binary_io import BinaryWriter
 from .yaz0 import Yaz0Compression
 from .bfres_file import BfresFile
 
@@ -22,11 +25,26 @@ class ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
         maxlen=1024,
         default=""
     )
+    import_textures = bpy.props.BoolProperty(
+        name="Import Textures",
+        description="Loads the embedded textures, requires TexConv to be set up in the add-on preferences.",
+        default=True
+    )
     merge_seams = bpy.props.BoolProperty(
         name="Merge Seam Vertices",
         description="Remerge vertices which were split to create UV seams.",
         default=True
     )
+
+    def draw(self, context):
+        layout = self.layout
+        addon_prefs = context.user_preferences.addons[__package__].preferences
+        # Import Textures
+        sub = layout.row()
+        sub.enabled = bool(addon_prefs.tex_conv_path)
+        sub.prop(self, "import_textures")
+        # Merge Seams
+        layout.prop(self, "merge_seams")
 
     def execute(self, context):
         from . import importing
@@ -41,6 +59,8 @@ class Importer:
     def __init__(self, operator, context, filepath):
         self.operator = operator
         self.context = context
+        # Keep a link to the add-on preferences.
+        self.addon_prefs = context.user_preferences.addons[__package__].preferences
         # Extract path information.
         self.filepath = filepath
         self.directory = os.path.dirname(self.filepath)
@@ -48,9 +68,11 @@ class Importer:
         self.fileext = os.path.splitext(self.filename)[1].upper()
         # Create work directories for temporary files.
         self.work_directory = os.path.join(self.directory, self.filename + ".work")
+        self.gtx_directory = os.path.join(self.work_directory, "gtx")
+        self.dds_directory = os.path.join(self.work_directory, "dds")
         os.makedirs(self.work_directory, exist_ok=True)
-        self.gfx2_directory = os.path.join(self.work_directory, "gfx2")
-        os.makedirs(self.gfx2_directory, exist_ok=True)
+        os.makedirs(self.gtx_directory, exist_ok=True)
+        os.makedirs(self.dds_directory, exist_ok=True)
 
     def run(self):
         # Ensure to have a stream with decompressed data.
@@ -65,9 +87,32 @@ class Importer:
         return {"FINISHED"}
 
     def _convert_bfres(self, bfres):
+        # Go through the FTEX sections and export them to GTX, then to DDS.
+        if self.operator.import_textures and self.addon_prefs.tex_conv_path:
+            for ftex_node in bfres.ftex_index_group[1:]:
+                self._convert_ftex(bfres, ftex_node.data)
         # Go through the FMDL sections which map to a Blender object.
         for fmdl_node in bfres.fmdl_index_group[1:]:
             self._convert_fmdl(bfres, fmdl_node.data)
+
+    def _convert_ftex(self, bfres, ftex):
+        # Export the FTEX section referenced by the texture selector as a GTX file.
+        texture_name = ftex.header.file_name_offset.name
+        gtx_filename = os.path.join(self.gtx_directory, texture_name + ".gtx")
+        Log.write(0, "Exporting     '" + gtx_filename + "'...")
+        ftex.export_gtx(open(gtx_filename, "wb"))
+        # Decompress the GTX texture file with.
+        Log.write(0, "Decompressing '" + gtx_filename + "'...")
+        subprocess.call([self.addon_prefs.tex_conv_path,
+            "-i", gtx_filename,
+            "-f", "GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_SRGB",
+            "-o", gtx_filename])
+        # Convert the decompressed GTX texture to DDS.
+        Log.write(0, "Converting    '" + gtx_filename + "'...")
+        dds_filename = os.path.join(self.dds_directory, texture_name + ".dds")
+        subprocess.call([self.addon_prefs.tex_conv_path,
+            "-i", gtx_filename,
+            "-o", dds_filename])
 
     def _convert_fmdl(self, bfres, fmdl):
         # Create an object for this FMDL in the current scene.
@@ -125,34 +170,49 @@ class Importer:
         if not material is None:
             return material
         material = bpy.data.materials.new(material_name)
+        material.use_transparency = True
+        material.alpha = 0
+        material.specular_alpha = 0
         # Convert and load the textures into the materials' texture slots.
-        # textures: fmat.texture_selector_array (offset and name like "Iggy_Alb")
-        # texture influences: fmat.texture_attribute_selector_index_group -> attribute_name_offset.name (_a0, _n0, ...)
         for tex_selector, attrib in zip(fmat.texture_selector_array, fmat.texture_attribute_selector_index_group[1:]):
-            if self._check_texture_attrib_supported(attrib):
+            attribute_type = attrib.name_offset.name[1] # Gets the first letter describing the texture use.
+            # Check if the attribute is supported at all, and create a correspondingly configured texture slot if it is.
+            if attribute_type != "b": # TODO: Bake textures are not supported yet.
                 slot = material.texture_slots.add()
-                self._configure_texture_slot(slot, bfres, tex_selector, attrib)
+                slot.texture = self._get_ftex_texture(tex_selector.name_offset.name, attribute_type)
+                if attribute_type == "a":
+                    # Diffuse (albedo) map.
+                    slot.use_map_alpha = True
+                    pass
+                elif attribute_type == "s":
+                    # Specular map.
+                    slot.use_map_color_diffuse = False
+                    slot.use_map_specular = True
+                    slot.use_map_color_spec = True
+                elif attribute_type == "n":
+                    # Normal map.
+                    slot.use_map_color_diffuse = False
+                    slot.use_map_normal = True
+                    slot.texture.use_normal_map = True
+                elif attribute_type == "e":
+                    # Emmissive map.
+                    # TODO: Slot settings might be wrong (s. Wild Woods' glowing circles).
+                    slot.use_map_color_diffuse = False
+                    slot.use_map_emit = True
         return material
 
-    def _check_texture_attrib_supported(self, attrib):
-        attrib_name = attrib.name_offset.name
-        # Bake textures are not supported at the moment.
-        return attrib_name[1] != "b"
-
-    def _configure_texture_slot(self, slot, bfres, texture_selector, texture_attrib):
-        slot.texture = self._get_ftex_texture(bfres, texture_selector)
-
-    def _get_ftex_texture(self, bfres, texture_selector):
-        # Return a previously created texture or make a new one.
-        texture_name = texture_selector.name_offset.name
+    def _get_ftex_texture(self, texture_name, attribute_type):
+        # Return a previously created texture if it exists.
         texture = bpy.data.textures.get(texture_name)
         if not texture is None:
             return texture
-        # Export the FTEX section referenced by the texture selector as a GFX2 file.
-        ftex = bfres.ftex_index_group[texture_selector.ftex_offset].data
-        gfx2_filename = os.path.join(self.gfx2_directory, ftex.header.file_name_offset.name + ".gfx2")
-        ftex.export_gtx(open(gfx2_filename, "wb"))
-        # TODO: Delegate the conversion to TexConv2.
-        # Load the converted DDS texture.
+        # Load a new texture from the DDS file.
+        image_file_name = os.path.join(self.dds_directory, texture_name) + ".dds"
+        # TexConv has a bug as it exports A8R8G8B8 data as a X8R8G8B8 DDS. Patch the DDS for diffuse textures.
+        if attribute_type == "a":
+            with BinaryWriter(open(image_file_name, "r+b")) as writer:
+                writer.seek(0x68) # DDS_HEADER->DDS_PIXELFORMAT->dwABitMask
+                writer.write_uint32(0xFF000000) # Mask of the alpha data.
         texture = bpy.data.textures.new(texture_name, "IMAGE")
-        # TODO: texture.image = ?
+        texture.image = bpy.data.images.load(image_file_name, check_existing=True)
+        return texture

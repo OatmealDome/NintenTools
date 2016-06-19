@@ -102,7 +102,7 @@ class BinaryWriter:
         return self.writer.tell()
 
     def write_byte(self, value):
-        self.writer.write(value)
+        self.writer.write(struct.pack("B", value))
 
     def write_bytes(self, value):
         self.writer.write(value)

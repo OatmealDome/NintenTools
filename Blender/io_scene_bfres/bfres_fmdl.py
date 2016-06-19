@@ -166,7 +166,7 @@ class FvtxSubsection:
 
         def _parse_2x_16bit_short_as_float(self, buffer, offset):
             offset += self.element_offset
-            return (x / 0x7FFF for x in struct.unpack(">2H", buffer.data[offset:offset + 4]))
+            return tuple(x / 0x7FFF for x in struct.unpack(">2H", buffer.data[offset:offset + 4]))
 
         def _parse_4x_8bit_signed(self, buffer, offset):
             offset += self.element_offset
