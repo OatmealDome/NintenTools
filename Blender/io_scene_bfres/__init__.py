@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Nintendo BFRES format",
     "author": "Ray Koopa",
-    "version": (0, 1, 0),
+    "version": (0, 4, 0),
     "blender": (2, 75, 0),
     "location": "File > Import-Export",
     "description": "Import-Export BFRES mesh, UV's, materials and textures",
