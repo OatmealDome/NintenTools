@@ -481,7 +481,7 @@ class FmatSubsection:
             self.unknown0x06 = reader.read_uint16() # flags?
             self.unknown0x08 = reader.read_uint32() # 0x80000000
             self.unknown0x0c = reader.read_uint32() # 0x00000000
-            self.attribute_name_offset = BfresNameOffset(reader)
+            self.name_offset = BfresNameOffset(reader)
             index_and_unknown = reader.read_uint32()
             self.index = index_and_unknown >> 24
             self.unknown = index_and_unknown & 0x00FFFFFF
@@ -531,8 +531,11 @@ class FmatSubsection:
         for i in range(0, self.header.texture_selector_count):
             self.texture_selector_array.append(self.TextureSelector(reader))
         # Load the texture attribute selector index group.
-        reader.seek(self.header.texture_attribute_selector_index_group_offset.to_file)
-        self.texture_attribute_selector_index_group = IndexGroup(reader, lambda r: self.TextureAttributeSelector(r))
+        if self.header.texture_attribute_selector_index_group_offset:
+            reader.seek(self.header.texture_attribute_selector_index_group_offset.to_file)
+            self.texture_attribute_selector_index_group = IndexGroup(reader, lambda r: self.TextureAttributeSelector(r))
+        else:
+            self.texture_attribute_selector_index_group = None
         # Load the material parameter index group.
         reader.seek(self.header.material_param_index_group_offset.to_file)
         self.material_param_index_group = IndexGroup(reader, lambda r: self.MaterialParameter(r))

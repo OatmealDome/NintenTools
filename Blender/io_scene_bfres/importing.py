@@ -124,9 +124,9 @@ class Importer:
 
     def _convert_fshp(self, bfres, fmdl, fmdl_obj, fshp):
         # Get the vertices and indices of the most detailled LoD model.
-        lod_model = fshp.lod_models[0]
         vertices = fmdl.fvtx_array[fshp.header.buffer_index].get_vertices()
-        indices = lod_model.index_buffer.indices #get_indices_for_visibility_group(0)
+        lod_model = fshp.lod_models[0]
+        indices = lod_model.index_buffer.indices
         # Create a bmesh to represent the FSHP polygon.
         bm = bmesh.new()
         # Go through the vertices (starting at the given offset) and add them to the bmesh.
@@ -140,14 +140,19 @@ class Importer:
         bm.verts.index_update()
         # Connect the faces (they are organized as a triangle list) and smooth shade them.
         for i in range(0, len(indices), 3):
-            face = bm.faces.new(bm.verts[j] for j in indices[i:i + 3])
+            try:
+                face = bm.faces.new(bm.verts[j] for j in indices[i:i + 3])
+            except ValueError:
+                pass # TODO: Handle multiple same faces correctly (they're probably part of other UV layers).
             face.smooth = True
-        # Set the UV coordinates by iterating through the face loops and getting their vertex' index.
-        uv_layer = bm.loops.layers.uv.new()
-        for face in bm.faces:
-            for loop in face.loops:
-                uv = vertices[loop.vert.index + lod_model.skip_vertices].u0
-                loop[uv_layer].uv = (uv[0], 1 - uv[1]) # Flip Y
+        # TODO: Import all UV layers, not only the first one.
+        # If UV's exist, set the UV coordinates by iterating through the face loops and getting their vertex' index.
+        if not vertices[0].u0 is None: # Check the first vertex if it contains the required data.
+            uv_layer = bm.loops.layers.uv.new()
+            for face in bm.faces:
+                for loop in face.loops:
+                    uv = vertices[loop.vert.index + lod_model.skip_vertices].u0
+                    loop[uv_layer].uv = (uv[0], 1 - uv[1]) # Flip Y
         # Optimize the mesh if requested.
         if self.operator.merge_seams:
             bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0)
@@ -175,34 +180,32 @@ class Importer:
         material.alpha = 0
         material.specular_alpha = 0
         # Convert and load the textures into the materials' texture slots.
-        for tex_selector, attrib in zip(fmat.texture_selector_array, fmat.texture_attribute_selector_index_group[1:]):
-            texture_name = tex_selector.name_offset.name
-            attribute_name = attrib.data.attribute_name_offset.name[1] # Gets the letter describing the texture use.
-            attribute_name = self._get_correct_attribute_name(texture_name, attribute_name)
-            # Check if the attribute is supported at all, and create a correspondingly configured texture slot if it is.
-            if attribute_name != "b": # TODO: Bake textures are not supported yet.
-                slot = material.texture_slots.add()
-                slot.texture = self._get_ftex_texture(tex_selector.name_offset.name, attribute_name)
-                if attribute_name == "a":
-                    # Diffuse (albedo) map.
-                    slot.use_map_alpha = True
-                elif attribute_name == "s":
-                    # Specular map.
-                    slot.use_map_color_diffuse = False
-                    slot.use_map_specular = True
-                    slot.use_map_color_spec = True
-                elif attribute_name == "n":
-                    # Normal map.
-                    slot.use_map_color_diffuse = False
-                    slot.use_map_normal = True
-                    slot.texture.use_normal_map = True
-                elif attribute_name == "e":
-                    # Emmissive map.
-                    # TODO: Slot settings might be wrong (s. Wild Woods' glowing circles).
-                    slot.use_map_color_diffuse = False
-                    slot.use_map_emit = True
-                else:
-                    Log.write(0, "Warning: Unhandled texture attribute type '" + attribute_name + "'.")
+        if len(fmat.texture_selector_array):
+            for texture, attrib in zip(fmat.texture_selector_array, fmat.texture_attribute_selector_index_group[1:]):
+                texture_name = texture.name_offset.name
+                attribute_name = self._get_attribute_type(texture_name, attrib.name_offset.name)
+                # Check if the attribute is supported at all, and create a correspondingly configured texture slot if it is.
+                if attribute_name != "b": # TODO: Bake textures are not supported yet.
+                    slot = material.texture_slots.add()
+                    slot.texture = self._get_ftex_texture(texture_name, attribute_name)
+                    if attribute_name == "a":
+                        # Diffuse (albedo) map.
+                        slot.use_map_alpha = True
+                    elif attribute_name == "s":
+                        # Specular map.
+                        slot.use_map_color_diffuse = False
+                        slot.use_map_specular = True
+                        slot.use_map_color_spec = True
+                    elif attribute_name == "n":
+                        # Normal map.
+                        slot.use_map_color_diffuse = False
+                        slot.use_map_normal = True
+                        slot.texture.use_normal_map = True
+                    elif attribute_name == "e":
+                        # Emmissive map.
+                        # TODO: Slot settings might be wrong (s. Wild Woods' glowing circles).
+                        slot.use_map_color_diffuse = False
+                        slot.use_map_emit = True
         return material
 
     def _get_ftex_texture(self, texture_name, attribute_type):
@@ -221,19 +224,22 @@ class Importer:
         texture.image = bpy.data.images.load(image_file_name, check_existing=True)
         return texture
 
-    def _get_correct_attribute_name(self, texture_name, original_attribute_name):
+    def _get_attribute_type(self, texture_name, attribute_name):
         # Since the attributes provided to textures are often wrong, try to find the real attribute via texture name.
-        attribute_name = original_attribute_name
+        attribute_type = attribute_name[1]
         if "_Alb" in texture_name:
-            attribute_name = "a"
+            fixed_attribute_type = "a"
         elif "_Emm" in texture_name:
-            attribute_name = "e"
+            fixed_attribute_type = "e"
         elif "_Nrm" in texture_name:
-            attribute_name = "n"
+            fixed_attribute_type = "n"
         elif "_Spm" in texture_name:
-            attribute_name = "s"
-        # Log the correction.
-        if attribute_name != original_attribute_name:
-            Log.write(0, "Warning: Texture '" + texture_name + "': fixing bad attribute '" + original_attribute_name
-                + "' to '" + attribute_name + "'")
-        return attribute_name
+            fixed_attribute_type = "s"
+        else:
+            fixed_attribute_type = attribute_type
+            Log.write(0, "Warning: Texture '" + texture_name + "': Unknown attribute '" + attribute_name + "'")
+        # Log a correction.
+        if attribute_type != fixed_attribute_type:
+            Log.write(0, "Warning: Texture '" + texture_name + "': fixing type of attribute '" + attribute_name
+                + "' to '" + fixed_attribute_type + "'")
+        return attribute_type
