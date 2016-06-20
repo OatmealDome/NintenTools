@@ -99,16 +99,16 @@ class Importer:
         # Export the FTEX section referenced by the texture selector as a GTX file.
         texture_name = ftex.header.file_name_offset.name
         gtx_filename = os.path.join(self.gtx_directory, texture_name + ".gtx")
-        Log.write(0, "Exporting     '" + gtx_filename + "'...")
+        Log.write(0, "Exporting     '" + texture_name + "'...")
         ftex.export_gtx(open(gtx_filename, "wb"))
         # Decompress the GTX texture file with.
-        Log.write(0, "Decompressing '" + gtx_filename + "'...")
+        Log.write(0, "Decompressing '" + texture_name + "'...")
         subprocess.call([self.addon_prefs.tex_conv_path,
             "-i", gtx_filename,
             "-f", "GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_SRGB",
             "-o", gtx_filename])
         # Convert the decompressed GTX texture to DDS.
-        Log.write(0, "Converting    '" + gtx_filename + "'...")
+        Log.write(0, "Converting    '" + texture_name + "'...")
         dds_filename = os.path.join(self.dds_directory, texture_name + ".dds")
         subprocess.call([self.addon_prefs.tex_conv_path,
             "-i", gtx_filename,
@@ -126,7 +126,7 @@ class Importer:
         # Get the vertices and indices of the most detailled LoD model.
         lod_model = fshp.lod_models[0]
         vertices = fmdl.fvtx_array[fshp.header.buffer_index].get_vertices()
-        indices = lod_model.get_indices_for_visibility_group(0)
+        indices = lod_model.index_buffer.indices #get_indices_for_visibility_group(0)
         # Create a bmesh to represent the FSHP polygon.
         bm = bmesh.new()
         # Go through the vertices (starting at the given offset) and add them to the bmesh.
@@ -134,7 +134,7 @@ class Importer:
         # vertices required for the current LoD model (the game does not need that), get the last indexed one with max.
         last_vertex = max(indices) + 1
         for vertex in vertices[lod_model.skip_vertices:lod_model.skip_vertices + last_vertex]:
-            bm_vert = bm.verts.new((vertex.p0[0], vertex.p0[2], vertex.p0[1])) # Exchange Y with Z
+            bm_vert = bm.verts.new((vertex.p0[0], -vertex.p0[2], vertex.p0[1])) # Exchange Y with Z, mirror new Y
             #bm_vert.normal = vertex.n0 # Blender does not correctly support custom normals, and they look weird.
         bm.verts.ensure_lookup_table()
         bm.verts.index_update()
@@ -170,35 +170,39 @@ class Importer:
         if not material is None:
             return material
         material = bpy.data.materials.new(material_name)
+        material.specular_intensity = 0 # Do not make materials without specular map shine exaggeratedly.
         material.use_transparency = True
         material.alpha = 0
         material.specular_alpha = 0
         # Convert and load the textures into the materials' texture slots.
         for tex_selector, attrib in zip(fmat.texture_selector_array, fmat.texture_attribute_selector_index_group[1:]):
-            attribute_type = attrib.name_offset.name[1] # Gets the first letter describing the texture use.
+            texture_name = tex_selector.name_offset.name
+            attribute_name = attrib.data.attribute_name_offset.name[1] # Gets the letter describing the texture use.
+            attribute_name = self._get_correct_attribute_name(texture_name, attribute_name)
             # Check if the attribute is supported at all, and create a correspondingly configured texture slot if it is.
-            if attribute_type != "b": # TODO: Bake textures are not supported yet.
+            if attribute_name != "b": # TODO: Bake textures are not supported yet.
                 slot = material.texture_slots.add()
-                slot.texture = self._get_ftex_texture(tex_selector.name_offset.name, attribute_type)
-                if attribute_type == "a":
+                slot.texture = self._get_ftex_texture(tex_selector.name_offset.name, attribute_name)
+                if attribute_name == "a":
                     # Diffuse (albedo) map.
                     slot.use_map_alpha = True
-                    pass
-                elif attribute_type == "s":
+                elif attribute_name == "s":
                     # Specular map.
                     slot.use_map_color_diffuse = False
                     slot.use_map_specular = True
                     slot.use_map_color_spec = True
-                elif attribute_type == "n":
+                elif attribute_name == "n":
                     # Normal map.
                     slot.use_map_color_diffuse = False
                     slot.use_map_normal = True
                     slot.texture.use_normal_map = True
-                elif attribute_type == "e":
+                elif attribute_name == "e":
                     # Emmissive map.
                     # TODO: Slot settings might be wrong (s. Wild Woods' glowing circles).
                     slot.use_map_color_diffuse = False
                     slot.use_map_emit = True
+                else:
+                    Log.write(0, "Warning: Unhandled texture attribute type '" + attribute_name + "'.")
         return material
 
     def _get_ftex_texture(self, texture_name, attribute_type):
@@ -216,3 +220,20 @@ class Importer:
         texture = bpy.data.textures.new(texture_name, "IMAGE")
         texture.image = bpy.data.images.load(image_file_name, check_existing=True)
         return texture
+
+    def _get_correct_attribute_name(self, texture_name, original_attribute_name):
+        # Since the attributes provided to textures are often wrong, try to find the real attribute via texture name.
+        attribute_name = original_attribute_name
+        if "_Alb" in texture_name:
+            attribute_name = "a"
+        elif "_Emm" in texture_name:
+            attribute_name = "e"
+        elif "_Nrm" in texture_name:
+            attribute_name = "n"
+        elif "_Spm" in texture_name:
+            attribute_name = "s"
+        # Log the correction.
+        if attribute_name != original_attribute_name:
+            Log.write(0, "Warning: Texture '" + texture_name + "': fixing bad attribute '" + original_attribute_name
+                + "' to '" + attribute_name + "'")
+        return attribute_name

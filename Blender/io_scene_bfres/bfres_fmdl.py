@@ -141,7 +141,8 @@ class FvtxSubsection:
             # Get a method parsing this attribute format.
             self.parser = self._parsers.get(self.format, None)
             if not self.parser:
-                raise NotImplementedError("Attribute " + self.name_offset.name + ": unknown format " + str(self.format))
+                Log.write(0, "Warning: Attribute " + self.name_offset.name + ": unknown format " + str(self.format))
+                #raise NotImplementedError("Attribute " + self.name_offset.name + ": unknown format " + str(self.format))
 
         def _parse_2x_8bit_normalized(self, buffer, offset):
             offset += self.element_offset
@@ -270,8 +271,13 @@ class FvtxSubsection:
             attribute = attribute_node.data
             vertex_member = attribute.name_offset.name[1:] # Remove the underscore of the attribute name.
             buffer = self.buffers[attribute.buffer_index]
-            for i, offset in enumerate(range(0, buffer.size_in_bytes, buffer.stride)):
-                setattr(vertices[i], vertex_member, attribute.parser(attribute, buffer, offset))
+            if attribute.parser is None:
+                # Dump the attribute data into a file for further investigation.
+                for i, offset in enumerate(range(0, buffer.size_in_bytes, buffer.stride)):
+                    setattr(vertices[i], vertex_member, (0, 0, 0))
+            else:
+                for i, offset in enumerate(range(0, buffer.size_in_bytes, buffer.stride)):
+                    setattr(vertices[i], vertex_member, attribute.parser(attribute, buffer, offset))
         return vertices
 
 class FshpSubsection:
@@ -338,11 +344,6 @@ class FshpSubsection:
             self.index_buffer = self.IndexBuffer(reader)
             # Seek back as multiple LoD models are stored in an array.
             reader.seek(current_pos)
-
-        def get_indices_for_visibility_group(self, visibility_group_index):
-            # TODO: Want to ignore visibility groups at all later on, to import the whole model, not only parts.
-            visibility_group = self.visibility_groups[visibility_group_index]
-            return self.index_buffer.indices[visibility_group.index_byte_offset // 2:visibility_group.index_count]
 
     class VisibilityGroupTreeNode:
         def __init__(self, reader):
