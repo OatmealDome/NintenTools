@@ -1,6 +1,6 @@
 ﻿namespace Syroot.NintenTools.Bfres.Ftex
 {
-    using Syroot.NintenTools.Gx2;
+    using Syroot.NintenTools.Bfres.Gx2;
     using Syroot.NintenTools.IO;
 
     /// <summary>

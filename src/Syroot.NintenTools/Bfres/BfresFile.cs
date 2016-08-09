@@ -17,6 +17,7 @@
     /// <summary>
     /// Represents a BFRES file and its contents.
     /// </summary>
+    [Obsolete("The BFRES API requires a big update. Use on your own fault.")]
     public class BfresFile
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

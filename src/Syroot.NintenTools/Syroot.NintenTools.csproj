@@ -68,7 +68,14 @@
     <Compile Include="Bfres\Fvis\FvisSection.cs" />
     <Compile Include="Bfres\BfresIndexGroupNode.cs" />
     <Compile Include="Bfres\BfresIndexGroup.cs" />
-    <Compile Include="Gx2\Enumerations.cs" />
+    <Compile Include="Bfres\Gx2\Enumerations.cs" />
+    <Compile Include="Byaml\ByamlException.cs" />
+    <Compile Include="Byaml\ByamlLoader.cs" />
+    <Compile Include="Byaml\ByamlNode.cs" />
+    <Compile Include="Byaml\ByamlNodeTypeException.cs" />
+    <Compile Include="Byaml\ByamlNodeType.cs" />
+    <Compile Include="Byaml\ByamlPath.cs" />
+    <Compile Include="Byaml\ByamlPathPoint.cs" />
     <Compile Include="IO\BinaryDataFormats.cs" />
     <Compile Include="IO\BinaryDataReader.cs" />
     <Compile Include="IO\BinaryDataReaderExtensions.cs" />

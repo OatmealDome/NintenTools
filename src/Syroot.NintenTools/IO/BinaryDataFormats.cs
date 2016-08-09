@@ -8,7 +8,12 @@
         /// <summary>
         /// The <see cref="System.DateTime"/> has the time_t format of the C library.
         /// </summary>
-        CTime
+        CTime,
+
+        /// <summary>
+        /// The <see cref="System.DateTime"/> is stored as the ticks of a .NET <see cref="System.DateTime"/> instance.
+        /// </summary>
+        NetTicks
     }
 
     /// <summary>

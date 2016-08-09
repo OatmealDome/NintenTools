@@ -1,4 +1,4 @@
-﻿namespace Syroot.NintenTools.Gx2
+﻿namespace Syroot.NintenTools.Bfres.Gx2
 {
     // This file contains definitions originating from gx2Enum.h, converted into C#.
 

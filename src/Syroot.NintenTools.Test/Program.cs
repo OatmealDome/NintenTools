@@ -1,11 +1,12 @@
-﻿namespace Syroot.NintenTools.Test
-{
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using Syroot.NintenTools.Bfres;
-    using Syroot.NintenTools.Yaz0;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using Syroot.NintenTools.Bfres;
+using Syroot.NintenTools.Byaml;
+using Syroot.NintenTools.Yaz0;
 
+namespace Syroot.NintenTools.Test
+{
     /// <summary>
     /// The main class of the application.
     /// </summary>
@@ -15,15 +16,14 @@
         
         private static void Main(string[] args)
         {
-            //// Decompress an example file into a memory stream.
-            //using (MemoryStream bfresDataStream = new MemoryStream())
-            //{
-            //    DecompressYaz0File(@"D:\Pictures\Iggy.szs", bfresDataStream);
-            //    // Load the decompressed BFRES contents from the data stream.
-            //    LoadBfresFile(bfresDataStream);
-            //}
+            TestByaml();
+        }
 
-            using (FileStream fileStream = new FileStream(@"D:\Pictures\Blender Work Folder\course_model.bfres", FileMode.Open, FileAccess.Read, FileShare.Read))
+        // ---- BFRES ----
+
+        private static void TestBfres()
+        {
+            using (FileStream fileStream = new FileStream(@"D:\Pictures\Blender Work Folder\Iggy.bfres", FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 LoadBfresFile(fileStream);
             }
@@ -59,6 +59,13 @@
             {
                 Console.WriteLine(warning);
             }
+        }
+
+        // ---- BYAML ----
+
+        private static void TestByaml()
+        {
+            ByamlNode byaml = ByamlNode.Load(@"D:\Archive\Games\Emulators\Wii U\Roms\Mario Kart 8 EUR 4.1 with DLC1+2\content\course\Gu_FirstCircuit\course_muunt.byaml");
         }
     }
 }

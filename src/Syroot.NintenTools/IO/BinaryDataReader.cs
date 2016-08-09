@@ -1,15 +1,20 @@
-﻿namespace Syroot.NintenTools.IO
-{
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
+namespace Syroot.NintenTools.IO
+{
     /// <summary>
     /// Represents an extended <see cref="BinaryReader"/> supporting special file format data types.
     /// </summary>
     public class BinaryDataReader : BinaryReader
     {
+        // ---- MEMBERS ------------------------------------------------------------------------------------------------
+
+        private ByteOrder _byteOrder;
+        private bool      _needsReversion;
+
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -20,9 +25,8 @@
         /// <exception cref="ArgumentException">The stream does not support reading, is null, or is already closed.
         /// </exception>
         public BinaryDataReader(Stream input)
-            : base(input)
+            : this(input, new UTF8Encoding(), false)
         {
-            Encoding = new UTF8Encoding();
         }
 
         /// <summary>
@@ -36,9 +40,8 @@
         /// </exception>
         /// <exception cref="ArgumentNullException">encoding is null.</exception>
         public BinaryDataReader(Stream input, bool leaveOpen)
-            : base(input, new UTF8Encoding(), leaveOpen)
+            : this(input, new UTF8Encoding(), leaveOpen)
         {
-            Encoding = new UTF8Encoding();
         }
 
         /// <summary>
@@ -51,9 +54,8 @@
         /// </exception>
         /// <exception cref="ArgumentNullException">encoding is null.</exception>
         public BinaryDataReader(Stream input, Encoding encoding)
-            : base(input, encoding)
+            : this(input, encoding, false)
         {
-            Encoding = encoding;
         }
 
         /// <summary>
@@ -71,9 +73,26 @@
             : base(input, encoding, leaveOpen)
         {
             Encoding = encoding;
+            ByteOrder = ByteOrder.GetSystemByteOrder();
         }
 
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Gets or sets the byte order used to parse binary data with.
+        /// </summary>
+        public ByteOrder ByteOrder
+        {
+            get
+            {
+                return _byteOrder;
+            }
+            set
+            {
+                _byteOrder = value;
+                _needsReversion = _byteOrder != ByteOrder.GetSystemByteOrder();
+            }
+        }
 
         /// <summary>
         /// Gets the encoding used for string related operations where no other encoding has been provided. Due to the
@@ -83,15 +102,6 @@
         {
             get;
             private set;
-        }
-
-        /// <summary>
-        /// Gets or sets the byte order used to parse binary data with.
-        /// </summary>
-        public ByteOrder ByteOrder
-        {
-            get;
-            set;
         }
 
         /// <summary>
@@ -123,6 +133,15 @@
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
+        /// Aligns the reader to the next given byte multiple.
+        /// </summary>
+        /// <param name="alignment">The byte multiple.</param>
+        public void Align(int alignment)
+        {
+            Seek((-Position % alignment + alignment) % alignment);
+        }
+
+        /// <summary>
         /// Reads a <see cref="DateTime"/> from the current stream. The <see cref="DateTime"/> is available in the
         /// specified binary format.
         /// </summary>
@@ -134,6 +153,8 @@
             {
                 case BinaryDateTimeFormat.CTime:
                     return new DateTime(1970, 1, 1).ToLocalTime().AddSeconds(ReadUInt32());
+                case BinaryDateTimeFormat.NetTicks:
+                    return new DateTime(ReadInt64());
                 default:
                     throw new ArgumentOutOfRangeException("format", "The specified binary datetime format is invalid");
             }
@@ -146,7 +167,7 @@
         /// <returns>The 8-byte floating point value read from the current stream.</returns>
         public override double ReadDouble()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(double));
                 Array.Reverse(bytes);
@@ -165,7 +186,7 @@
         /// <returns>The 2-byte signed integer read from the current stream.</returns>
         public override short ReadInt16()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(short));
                 Array.Reverse(bytes);
@@ -202,7 +223,7 @@
         /// <returns>The 4-byte signed integer read from the current stream.</returns>
         public override int ReadInt32()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(int));
                 Array.Reverse(bytes);
@@ -239,7 +260,7 @@
         /// <returns>The 8-byte signed integer read from the current stream.</returns>
         public override long ReadInt64()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(long));
                 Array.Reverse(bytes);
@@ -258,7 +279,7 @@
         /// <returns>The 4-byte floating point value read from the current stream.</returns>
         public override float ReadSingle()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(float));
                 Array.Reverse(bytes);
@@ -354,7 +375,7 @@
         /// <returns>The 2-byte unsigned integer read from the current stream.</returns>
         public override ushort ReadUInt16()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(ushort));
                 Array.Reverse(bytes);
@@ -391,7 +412,7 @@
         /// <returns>The 8-byte unsigned integer read from the current stream.</returns>
         public override uint ReadUInt32()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(uint));
                 Array.Reverse(bytes);
@@ -428,7 +449,7 @@
         /// <returns>The 8-byte unsigned integer read from the current stream.</returns>
         public override ulong ReadUInt64()
         {
-            if (ByteOrder == ByteOrder.BigEndian)
+            if (_needsReversion)
             {
                 byte[] bytes = base.ReadBytes(sizeof(ulong));
                 Array.Reverse(bytes);
@@ -529,13 +550,31 @@
 
         private string ReadZeroTerminatedString(Encoding encoding)
         {
-            // Read single bytes.
+            // This will not work for strings with differently sized characters depending on their code.
+            int charSize = encoding.GetByteCount("a");
+
             List<byte> bytes = new List<byte>();
-            byte readByte = ReadByte();
-            while (readByte != 0)
+            if (charSize == sizeof(byte))
             {
-                bytes.Add(readByte);
-                readByte = ReadByte();
+                // Read single bytes.
+                byte readByte = ReadByte();
+                while (readByte != 0)
+                {
+                    bytes.Add(readByte);
+                    readByte = ReadByte();
+                }
+            }
+            else if (charSize == sizeof(ushort))
+            {
+                // Read ushort values with 2 bytes width.
+                uint readUShort = ReadUInt16();
+                while (readUShort != 0)
+                {
+                    byte[] ushortBytes = BitConverter.GetBytes(readUShort);
+                    bytes.Add(ushortBytes[0]);
+                    bytes.Add(ushortBytes[1]);
+                    readUShort = ReadUInt16();
+                }
             }
 
             // Convert to string.

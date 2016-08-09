@@ -1,16 +1,21 @@
-﻿namespace Syroot.NintenTools.IO
-{
-    using System;
-    using System.IO;
-    using System.Text;
+﻿using System;
+using System.IO;
+using System.Text;
 
+namespace Syroot.NintenTools.IO
+{
     /// <summary>
     /// Represents an extended <see cref="BinaryWriter"/> supporting special file format data types.
     /// </summary>
     public class BinaryDataWriter : BinaryWriter
     {
+        // ---- MEMBERS ------------------------------------------------------------------------------------------------
+
+        private ByteOrder _byteOrder;
+        private bool      _needsReversion;
+
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------
-        
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BinaryDataWriter"/> class based on the specified stream and
         /// using UTF-8 encoding.
@@ -19,7 +24,7 @@
         /// <exception cref="ArgumentException">The stream does not support writing or is already closed.</exception>
         /// <exception cref="ArgumentNullException">output is null.</exception>
         public BinaryDataWriter(Stream output)
-            : base(output)
+            : this(output, new UTF8Encoding(), false)
         {
         }
         
@@ -33,9 +38,8 @@
         /// <exception cref="ArgumentException">The stream does not support writing or is already closed.</exception>
         /// <exception cref="ArgumentNullException">output is null.</exception>
         public BinaryDataWriter(Stream output, bool leaveOpen)
-            : base(output, new UTF8Encoding(), leaveOpen)
+            : this(output, new UTF8Encoding(), leaveOpen)
         {
-            Encoding = new UTF8Encoding();
         }
 
         /// <summary>
@@ -47,9 +51,8 @@
         /// <exception cref="ArgumentException">The stream does not support writing or is already closed.</exception>
         /// <exception cref="ArgumentNullException">output or encoding is null.</exception>
         public BinaryDataWriter(Stream output, Encoding encoding)
-            : base(output, encoding)
+            : this(output, encoding, false)
         {
-            Encoding = encoding;
         }
 
         /// <summary>
@@ -66,9 +69,26 @@
             : base(output, encoding, leaveOpen)
         {
             Encoding = encoding;
+            ByteOrder = ByteOrder.GetSystemByteOrder();
         }
 
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Gets or sets the byte order used to parse binary data with.
+        /// </summary>
+        public ByteOrder ByteOrder
+        {
+            get
+            {
+                return _byteOrder;
+            }
+            set
+            {
+                _byteOrder = value;
+                _needsReversion = _byteOrder != ByteOrder.GetSystemByteOrder();
+            }
+        }
 
         /// <summary>
         /// Gets the encoding used for string related operations where no other encoding has been provided. Due to the
@@ -93,47 +113,12 @@
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Writes a string to this stream in the current encoding of the <see cref="BinaryDataWriter"/>, and advances
-        /// the current position of the stream in accordance with the encoding used and the specific characters being
-        /// written to the stream. The string will be available in the specified binary format.
+        /// Aligns the reader to the next given byte multiple..
         /// </summary>
-        /// <param name="value">The value to write.</param>
-        /// <param name="format">The binary format in which the string will be written.</param>
-        public void Write(string value, BinaryStringFormat format)
+        /// <param name="alignment">The byte multiple.</param>
+        public void Align(int alignment)
         {
-            Write(value, format, Encoding);
-        }
-
-        /// <summary>
-        /// Writes a string to this stream with the given encoding, and advances the current position of the stream in
-        /// accordance with the encoding used and the specific characters being written to the stream. The string will
-        /// be available in the specified binary format.
-        /// </summary>
-        /// <param name="value">The value to write.</param>
-        /// <param name="format">The binary format in which the string will be written.</param>
-        /// <param name="encoding">The encoding used for converting the string.</param>
-        public void Write(string value, BinaryStringFormat format, Encoding encoding)
-        {
-            switch (format)
-            {
-                case BinaryStringFormat.ByteLengthPrefix:
-                    WriteByteLengthPrefixString(value, encoding);
-                    break;
-                case BinaryStringFormat.WordLengthPrefix:
-                    WriteWordLengthPrefixString(value, encoding);
-                    break;
-                case BinaryStringFormat.DwordLengthPrefix:
-                    WriteDwordLengthPrefixString(value, encoding);
-                    break;
-                case BinaryStringFormat.ZeroTerminated:
-                    WriteZeroTerminatedString(value, encoding);
-                    break;
-                case BinaryStringFormat.NoPrefixOrTermination:
-                    WriteNoPrefixOrTerminationString(value, encoding);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException("format", "The specified binary string format is invalid");
-            }
+            Seek(-Position % alignment);
         }
 
         /// <summary>
@@ -182,7 +167,212 @@
             return new SeekTask(BaseStream, offset, origin);
         }
 
+        /// <summary>
+        /// Writes a <see cref="DateTime"/> to this stream. The <see cref="DateTime"/> will be available in the
+        /// specified binary format.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        /// <param name="format">The binary format in which the <see cref="DateTime"/> will be written.</param>
+        public void Write(DateTime value, BinaryDateTimeFormat format)
+        {
+            switch (format)
+            {
+                case BinaryDateTimeFormat.CTime:
+                    Write((uint)(new DateTime(1970, 1, 1) - value.ToLocalTime()).TotalSeconds);
+                    break;
+                case BinaryDateTimeFormat.NetTicks:
+                    Write(value.Ticks);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("format", "The specified binary datetime format is invalid.");
+            }
+        }
+
+        /// <summary>
+        /// Writes an 8-byte floating point value to this stream and advances the current position of the stream by
+        /// eight bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(double value)
+        {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
+        }
+
+        /// <summary>
+        /// Writes an 2-byte signed integer to this stream and advances the current position of the stream by two bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(short value)
+        {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
+        }
+
+        /// <summary>
+        /// Writes an 4-byte signed integer to this stream and advances the current position of the stream by four
+        /// bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(int value)
+        {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
+        }
+
+        /// <summary>
+        /// Writes an 8-byte signed integer to this stream and advances the current position of the stream by eight
+        /// bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(long value)
+        {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
+        }
+
+        /// <summary>
+        /// Writes an 4-byte floating point value to this stream and advances the current position of the stream by four
+        /// bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(float value)
+        {
+        }
+        
+        /// <summary>
+        /// Writes a string to this stream in the current encoding of the <see cref="BinaryDataWriter"/> and advances
+        /// the current position of the stream in accordance with the encoding used and the specific characters being
+        /// written to the stream. The string will be available in the specified binary format.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        /// <param name="format">The binary format in which the string will be written.</param>
+        public void Write(string value, BinaryStringFormat format)
+        {
+            Write(value, format, Encoding);
+        }
+
+        /// <summary>
+        /// Writes a string to this stream with the given encoding and advances the current position of the stream in
+        /// accordance with the encoding used and the specific characters being written to the stream. The string will
+        /// be available in the specified binary format.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        /// <param name="format">The binary format in which the string will be written.</param>
+        /// <param name="encoding">The encoding used for converting the string.</param>
+        public void Write(string value, BinaryStringFormat format, Encoding encoding)
+        {
+            switch (format)
+            {
+                case BinaryStringFormat.ByteLengthPrefix:
+                    WriteByteLengthPrefixString(value, encoding);
+                    break;
+                case BinaryStringFormat.WordLengthPrefix:
+                    WriteWordLengthPrefixString(value, encoding);
+                    break;
+                case BinaryStringFormat.DwordLengthPrefix:
+                    WriteDwordLengthPrefixString(value, encoding);
+                    break;
+                case BinaryStringFormat.ZeroTerminated:
+                    WriteZeroTerminatedString(value, encoding);
+                    break;
+                case BinaryStringFormat.NoPrefixOrTermination:
+                    WriteNoPrefixOrTerminationString(value, encoding);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("format", "The specified binary string format is invalid");
+            }
+        }
+
+        /// <summary>
+        /// Writes an 2-byte unsigned integer value to this stream and advances the current position of the stream by
+        /// two bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(ushort value)
+        {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
+        }
+
+        /// <summary>
+        /// Writes an 4-byte unsigned integer value to this stream and advances the current position of the stream by
+        /// four bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(uint value)
+        {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
+        }
+
+        /// <summary>
+        /// Writes an 8-byte unsigned integer value to this stream and advances the current position of the stream by
+        /// eight bytes.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public override void Write(ulong value)
+        {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
+        }
+        
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
+
+        private void WriteReversed(byte[] bytes)
+        {
+            Array.Reverse(bytes);
+            base.Write(bytes);
+        }
 
         private void WriteByteLengthPrefixString(string value, Encoding encoding)
         {
