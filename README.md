@@ -8,9 +8,9 @@ Usage
 =====
 
 Right now, the following usage cases are possible:
-- Load and inspect the structure of BFRES files.
-- Decompress Yaz0 files.
-- C# "Test" tool: Validates BFRES with researched details. It prints any assumptions not met as a warning.
+- YAZ0 compressed files can be decompressed.
+- BYAML files can be loaded and queried trivially like `(int)byaml["Obj"][1]["UnitIdNum"]` (unfinished, read-only).
+- Load and inspect the structure of BFRES files (deprecated classes, need update)
 
 Contributing
 ============
