@@ -65,7 +65,16 @@ namespace Syroot.NintenTools.Test
 
         private static void TestByaml()
         {
-            ByamlNode byaml = ByamlNode.Load(@"D:\Archive\Games\Emulators\Wii U\Roms\Mario Kart 8 EUR 4.1 with DLC1+2\content\course\Gu_FirstCircuit\course_muunt.byaml");
+            ByamlNode byaml = ByamlNode.Load(@"D:\\test.byaml");
+            foreach (ByamlNode objNode in byaml["Obj"])
+            {
+                Console.WriteLine((int)objNode["ObjId"]);
+                foreach (float param in objNode["Params"])
+                {
+                    Console.WriteLine(param);
+                }
+            }
+            byaml.Save("D:\\test.byaml");
         }
     }
 }

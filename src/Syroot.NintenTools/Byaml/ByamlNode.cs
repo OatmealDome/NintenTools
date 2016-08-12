@@ -1,28 +1,30 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using Syroot.NintenTools.IO;
+using System.Linq;
 
 namespace Syroot.NintenTools.Byaml
 {
     /// <summary>
-    /// Represents a node in a <see cref="ByamlFile"/>. This can either be a collection of nodes itself or a final
-    /// value.
+    /// Represents a node in a BYAML file. This can either be a collection of child nodes or a final value.
     /// </summary>
-    public class ByamlNode : IList<ByamlNode>, IDictionary<string, ByamlNode>, IList<string>, IList<ByamlPath>
+    /// <remarks>This is more or less a direct port of the Python API. The code might not be optimal for the CLR due to
+    /// the dynamic approach used in Python.</remarks>
+    [DebuggerDisplay("{Type}, {ToString()}")]
+    public class ByamlNode : IList<ByamlNode>, IEquatable<ByamlNode>
     {
         // ---- MEMBERS ------------------------------------------------------------------------------------------------
 
-        private string _string;
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)] private List<string>    _keys;
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)] private List<ByamlNode> _values;
+
+        private string    _string;
         private ByamlPath _path;
-        private List<ByamlNode> _array;
-        private Dictionary<string, ByamlNode> _dictionary;
-        private List<string> _stringArray;
-        private List<ByamlPath> _pathArray;
-        private bool _boolean;
-        private int _integer;
-        private float _float;
+        private bool?     _boolean;
+        private int?      _integer;
+        private float?    _float;
 
         // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
 
@@ -30,7 +32,7 @@ namespace Syroot.NintenTools.Byaml
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(string value)
+        public ByamlNode(string value)
         {
             Type = ByamlNodeType.StringIndex;
             _string = value;
@@ -40,7 +42,7 @@ namespace Syroot.NintenTools.Byaml
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(ByamlPath value)
+        public ByamlNode(ByamlPath value)
         {
             Type = ByamlNodeType.PathIndex;
             _path = value;
@@ -50,47 +52,64 @@ namespace Syroot.NintenTools.Byaml
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(List<ByamlNode> value)
+        public ByamlNode(List<ByamlNode> value)
         {
             Type = ByamlNodeType.Array;
-            _array = value;
+            _values = value;
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(Dictionary<string, ByamlNode> value)
+        public ByamlNode(Dictionary<string, ByamlNode> value)
         {
             Type = ByamlNodeType.Dictionary;
-            _dictionary = value;
+
+            _keys = new List<string>();
+            _values = new List<ByamlNode>();
+            foreach (KeyValuePair<string, ByamlNode> keyValuePair in value)
+            {
+                _keys.Add(keyValuePair.Key);
+                _values.Add(keyValuePair.Value);
+            }
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(List<string> value)
+        public ByamlNode(List<string> value)
         {
             Type = ByamlNodeType.StringArray;
-            _stringArray = value;
+
+            _values = new List<ByamlNode>();
+            foreach (string element in value)
+            {
+                _values.Add(new ByamlNode(element));
+            }
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(List<ByamlPath> value)
+        public ByamlNode(List<ByamlPath> value)
         {
             Type = ByamlNodeType.PathArray;
-            _pathArray = value;
+
+            _values = new List<ByamlNode>();
+            foreach (ByamlPath element in value)
+            {
+                _values.Add(new ByamlNode(element));
+            }
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(bool value)
+        public ByamlNode(bool value)
         {
             Type = ByamlNodeType.Boolean;
             _boolean = value;
@@ -100,7 +119,7 @@ namespace Syroot.NintenTools.Byaml
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(int value)
+        public ByamlNode(int value)
         {
             Type = ByamlNodeType.Integer;
             _integer = value;
@@ -110,72 +129,90 @@ namespace Syroot.NintenTools.Byaml
         /// Initializes a new instance of the <see cref="ByamlNode"/> class from the given value.
         /// </summary>
         /// <param name="value">The value the node will have.</param>
-        internal ByamlNode(float value)
+        public ByamlNode(float value)
         {
             Type = ByamlNodeType.Float;
             _float = value;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ByamlNode"/> class, loading data according to the given
-        /// <see cref="ByamlNodeType"/> with the provided <see cref="ByamlLoader"/>.
+        /// Gets the <see cref="ByamlNode"/> at the given index.
         /// </summary>
-        /// <param name="type">The type of the node data to read.</param>
-        /// <param name="loader">The <see cref="ByamlLoader"/> to load data with.</param>
-        internal ByamlNode(ByamlNodeType type, ByamlLoader loader)
+        /// <param name="index">The index of the <see cref="ByamlNode"/> to retrieve.</param>
+        /// <returns>The <see cref="ByamlNode"/> at the given index.</returns>
+        public ByamlNode this[int index]
         {
-            Type = type;
-            switch (Type)
+            get
             {
-                case ByamlNodeType.StringIndex:
-                    _string = (string)loader.StringArray[loader.Reader.ReadInt32()];
-                    break;
-                case ByamlNodeType.PathIndex:
-                    _path = (ByamlPath)loader.PathArray[loader.Reader.ReadInt32()];
-                    break;
-                case ByamlNodeType.Boolean:
-                    _boolean = loader.Reader.ReadInt32() != 0;
-                    break;
-                case ByamlNodeType.Integer:
-                    _integer = loader.Reader.ReadInt32();
-                    break;
-                case ByamlNodeType.Float:
-                    _float = loader.Reader.ReadSingle();
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
+                switch (Type)
+                {
+                    case ByamlNodeType.Array:
+                    case ByamlNodeType.StringArray:
+                    case ByamlNodeType.PathArray:
+                        return _values[index];
+                    default:
+                        throw new ByamlNodeTypeException(Type);
+                }
+            }
+            set
+            {
+                switch (Type)
+                {
+                    case ByamlNodeType.Array:
+                    case ByamlNodeType.StringArray:
+                    case ByamlNodeType.PathArray:
+                        _values[index] = value;
+                        break;
+                    default:
+                        throw new ByamlNodeTypeException(Type);
+                }
             }
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ByamlNode"/> class for array nodes with the specified length,
-        /// loading data according to the given <see cref="ByamlNodeType"/> with the provided <see cref="ByamlLoader"/>.
+        /// Gets the <see cref="ByamlNode"/> with the given key.
         /// </summary>
-        /// <param name="type">The type of the node data to read.</param>
-        /// <param name="loader">The <see cref="ByamlLoader"/> to load data with.</param>
-        /// <param name="length">The number of entries in the array node.</param>
-        internal ByamlNode(ByamlNodeType type, ByamlLoader loader, int length)
+        /// <param name="key">The key of the <see cref="ByamlNode"/> to retrieve.</param>
+        /// <returns>The <see cref="ByamlNode"/> at the given index.</returns>
+        public ByamlNode this[string key]
         {
-            Type = type;
-            switch (Type)
+            get
             {
-                case ByamlNodeType.Array:
-                    LoadArray(loader, length);
-                    break;
-                case ByamlNodeType.Dictionary:
-                    LoadDictionary(loader, length);
-                    break;
-                case ByamlNodeType.StringArray:
-                    LoadStringArray(loader, length);
-                    break;
-                case ByamlNodeType.PathArray:
-                    LoadPathArray(loader, length);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
+                switch (Type)
+                {
+                    case ByamlNodeType.Dictionary:
+                        for (int i = 0; i < _keys.Count; i++)
+                        {
+                            if (_keys[i] == key)
+                            {
+                                return _values[i];
+                            }
+                        }
+                        throw new KeyNotFoundException();
+                    default:
+                        throw new ByamlNodeTypeException(Type);
+                }
+            }
+            set
+            {
+                switch (Type)
+                {
+                    case ByamlNodeType.Dictionary:
+                        for (int i = 0; i < _keys.Count; i++)
+                        {
+                            if (_keys[i] == key)
+                            {
+                                _values[i] = value;
+                                return;
+                            }
+                        }
+                        throw new KeyNotFoundException();
+                    default:
+                        throw new ByamlNodeTypeException(Type);
+                }
             }
         }
-
+        
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -184,7 +221,7 @@ namespace Syroot.NintenTools.Byaml
         public ByamlNodeType Type { get; }
 
         /// <summary>
-        /// Gets the number of elements contained in the <see cref="ICollection"/>.
+        /// Gets the number of elements in the collection node.
         /// </summary>
         public int Count
         {
@@ -193,13 +230,10 @@ namespace Syroot.NintenTools.Byaml
                 switch (Type)
                 {
                     case ByamlNodeType.Array:
-                        return _array.Count;
                     case ByamlNodeType.Dictionary:
-                        return _dictionary.Count;
                     case ByamlNodeType.StringArray:
-                        return _stringArray.Count;
                     case ByamlNodeType.PathArray:
-                        return _pathArray.Count;
+                        return _values.Count;
                     default:
                         throw new ByamlNodeTypeException(Type);
                 }
@@ -207,41 +241,7 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
-        /// Gets the number of elements contained in the <see cref="ICollection"/>.
-        /// </summary>
-        int ICollection<string>.Count
-        {
-            get
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.StringArray:
-                        return _stringArray.Count;
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the number of elements contained in the <see cref="ICollection"/>.
-        /// </summary>
-        int ICollection<ByamlPath>.Count
-        {
-            get
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.PathArray:
-                        return _pathArray.Count;
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets a value indicating whether the <see cref="ICollection"/> is read-only.
+        /// Gets a value indicating whether the collection node is read-only.
         /// </summary>
         public bool IsReadOnly
         {
@@ -249,16 +249,16 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
-        /// Gets an <see cref="ICollection"/> containing the keys of the <see cref="IDictionary"/>.
+        /// Gets an <see cref="ICollection"/> containing the keys of the dictionary node.
         /// </summary>
-        public ICollection<string> Keys
+        public List<string> Keys
         {
             get
             {
                 switch (Type)
                 {
                     case ByamlNodeType.Dictionary:
-                        return _dictionary.Keys;
+                        return _keys;
                     default:
                         throw new ByamlNodeTypeException(Type);
                 }
@@ -266,24 +266,24 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
-        /// Gets an <see cref="ICollection"/> containing the values in the <see cref="IDictionary"/>.
+        /// Gets an <see cref="ICollection"/> containing the values of the dictionary node.
         /// </summary>
-        public ICollection<ByamlNode> Values
+        public List<ByamlNode> Values
         {
             get
             {
                 switch (Type)
                 {
                     case ByamlNodeType.Dictionary:
-                        return _dictionary.Values;
+                        return _values;
                     default:
                         throw new ByamlNodeTypeException(Type);
                 }
             }
         }
-
-        // ---- OPERATORS ----------------------------------------------------------------------------------------------
         
+        // ---- OPERATORS ----------------------------------------------------------------------------------------------
+
         /// <summary>
         /// Gets a <see cref="ByamlNode"/> out of the value.
         /// </summary>
@@ -401,7 +401,7 @@ namespace Syroot.NintenTools.Byaml
             {
                 throw new ByamlNodeTypeException(node.Type);
             }
-            return node._array;
+            return node._values;
         }
 
         /// <summary>
@@ -414,7 +414,13 @@ namespace Syroot.NintenTools.Byaml
             {
                 throw new ByamlNodeTypeException(node.Type);
             }
-            return node._dictionary;
+
+            Dictionary<string, ByamlNode> dictionary = new Dictionary<string, ByamlNode>();
+            for (int i = 0; i < node._values.Count; i++)
+            {
+                dictionary.Add(node._keys[i], node._values[i]);
+            }
+            return dictionary;
         }
 
         /// <summary>
@@ -427,9 +433,10 @@ namespace Syroot.NintenTools.Byaml
             {
                 throw new ByamlNodeTypeException(node.Type);
             }
-            return node._stringArray;
-        }
 
+            return node._values.ConvertAll(x => (string)x);
+        }
+        
         /// <summary>
         /// Gets the <see cref="List{ByamlPath}"/> value of this node.
         /// </summary>
@@ -440,7 +447,8 @@ namespace Syroot.NintenTools.Byaml
             {
                 throw new ByamlNodeTypeException(node.Type);
             }
-            return node._pathArray;
+
+            return node._values.ConvertAll(x => (ByamlPath)x);
         }
 
         /// <summary>
@@ -453,7 +461,7 @@ namespace Syroot.NintenTools.Byaml
             {
                 throw new ByamlNodeTypeException(node.Type);
             }
-            return node._boolean;
+            return node._boolean.Value;
         }
 
         /// <summary>
@@ -466,7 +474,7 @@ namespace Syroot.NintenTools.Byaml
             {
                 throw new ByamlNodeTypeException(node.Type);
             }
-            return node._integer;
+            return node._integer.Value;
         }
 
         /// <summary>
@@ -479,135 +487,9 @@ namespace Syroot.NintenTools.Byaml
             {
                 throw new ByamlNodeTypeException(node.Type);
             }
-            return node._float;
+            return node._float.Value;
         }
-
-        /// <summary>
-        /// Gets the <see cref="ByamlNode"/> at the given index.
-        /// </summary>
-        /// <param name="index">The index of the <see cref="ByamlNode"/> to retrieve.</param>
-        /// <returns>The <see cref="ByamlNode"/> at the given index.</returns>
-        public ByamlNode this[int index]
-        {
-            get
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.Array:
-                        return _array[index];
-                    case ByamlNodeType.StringArray:
-                        return _stringArray[index];
-                    case ByamlNodeType.PathArray:
-                        return _pathArray[index];
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-            set
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.Array:
-                        _array[index] = value;
-                        break;
-                    case ByamlNodeType.StringArray:
-                        _stringArray[index] = (string)value;
-                        break;
-                    case ByamlNodeType.PathArray:
-                        _pathArray[index] = (ByamlPath)value;
-                        break;
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the <see cref="ByamlNode"/> with the given key.
-        /// </summary>
-        /// <param name="key">The key of the <see cref="ByamlNode"/> to retrieve.</param>
-        /// <returns>The <see cref="ByamlNode"/> at the given index.</returns>
-        public ByamlNode this[string key]
-        {
-            get
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.Dictionary:
-                        return _dictionary[key];
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-            set
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.Dictionary:
-                        _dictionary[key] = value;
-                        break;
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the <see cref="String"/> at the specified index.
-        /// </summary>
-        string IList<string>.this[int index]
-        {
-            get
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.StringArray:
-                        return _stringArray[index];
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-            set
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.StringArray:
-                        _stringArray[index] = value;
-                        break;
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the <see cref="ByamlPath"/> at the specified index.
-        /// </summary>
-        ByamlPath IList<ByamlPath>.this[int index]
-        {
-            get
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.PathArray:
-                        return _pathArray[index];
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-            set
-            {
-                switch (Type)
-                {
-                    case ByamlNodeType.PathArray:
-                        _pathArray[index] = value;
-                        break;
-                    default:
-                        throw new ByamlNodeTypeException(Type);
-                }
-            }
-        }
-
+        
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
@@ -617,8 +499,7 @@ namespace Syroot.NintenTools.Byaml
         /// <returns>The new <see cref="ByamlNode"/> instance.</returns>
         public static ByamlNode Load(Stream stream)
         {
-            ByamlLoader loader = new ByamlLoader(stream);
-            return loader.Root;
+            return ByamlFile.Load(stream);
         }
 
         /// <summary>
@@ -628,7 +509,10 @@ namespace Syroot.NintenTools.Byaml
         /// <returns>The new <see cref="ByamlNode"/> instance.</returns>
         public static ByamlNode Load(string fileName)
         {
-            return Load(new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read));
+            using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                return Load(stream);
+            }
         }
 
         /// <summary>
@@ -639,10 +523,10 @@ namespace Syroot.NintenTools.Byaml
         {
             if (Type != ByamlNodeType.Array && Type != ByamlNodeType.Dictionary)
             {
-                throw new ByamlNodeTypeException("Only Array or Dictionary nodes can be saved as BYAML data.");
+                throw new ByamlNodeTypeException("Only Array or Dictionary nodes can be saved as the BYAML root.");
             }
 
-            // TODO
+            ByamlFile.Save(stream, this);
         }
 
         /// <summary>
@@ -651,20 +535,255 @@ namespace Syroot.NintenTools.Byaml
         /// <param name="fileName">The name of the file to save the contents in.</param>
         public void Save(string fileName)
         {
-            Save(new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None));
+            using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                Save(stream);
+            }
         }
 
         /// <summary>
-        /// Exposes the enumerator, which supports a simple iteration over a collection of <see cref="ByamlNode"/>
-        /// instances.
+        /// Adds an item to the collection node.
         /// </summary>
-        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        public IEnumerator<ByamlNode> GetEnumerator()
+        /// <param name="item">The object to add to the collection node.</param>
+        public void Add(ByamlNode item)
         {
             switch (Type)
             {
                 case ByamlNodeType.Array:
-                    return _array.GetEnumerator();
+                    _values.Add(item);
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Adds an item with the specific key to the collection node.
+        /// </summary>
+        /// <param name="key">The key under which the item will be added.</param>
+        /// <param name="item">The object to add to the collection node.</param>
+        public void Add(string key, ByamlNode value)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.Dictionary:
+                    if (_keys.Contains(key))
+                    {
+                        throw new ArgumentException(String.Format("An item with the key '{0}' has already been added.",
+                            key));
+                    }
+                    _keys.Add(key);
+                    _values.Add(value);
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Adds an item to the collection node.
+        /// </summary>
+        /// <param name="item">The object to add to the collection node.</param>
+        public void Add(KeyValuePair<string, ByamlNode> item)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.Dictionary:
+                    if (_keys.Contains(item.Key))
+                    {
+                        throw new ArgumentException(String.Format("An item with the key '{0}' has already been added.",
+                            item.Key));
+                    }
+                    _keys.Add(item.Key);
+                    _values.Add(item.Value);
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Adds an item to the collection node.
+        /// </summary>
+        /// <param name="item">The object to add to the collection node.</param>
+        public void Add(string item)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.StringArray:
+                    _values.Add(item);
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Adds an item to the collection node.
+        /// </summary>
+        /// <param name="item">The object to add to the collection node.</param>
+        public void Add(ByamlPath item)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.PathArray:
+                    _values.Add(item);
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Removes all items from the collection node.
+        /// </summary>
+        public void Clear()
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.Array:
+                case ByamlNodeType.StringArray:
+                case ByamlNodeType.PathArray:
+                    _values.Clear();
+                    break;
+                case ByamlNodeType.Dictionary:
+                    _keys.Clear();
+                    _values.Clear();
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the collection node contains a specific value.
+        /// </summary>
+        /// <param name="item">The object to locate in the collection node.</param>
+        /// <returns>true if <paramref name="item"/> is found in the collection node; otherwise, false.</returns>
+        public bool Contains(ByamlNode item)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.Array:
+                    return _values.Contains(item);
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the collection node contains a specific value.
+        /// </summary>
+        /// <param name="item">The object to locate in the collection node.</param>
+        /// <returns>true if <paramref name="item"/> is found in the collection node; otherwise, false.</returns>
+        public bool Contains(KeyValuePair<string, ByamlNode> item)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.Dictionary:
+                    return _keys.Contains(item.Key) && _values.Contains(item.Value);
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the collection node contains a specific value.
+        /// </summary>
+        /// <param name="item">The object to locate in the collection node.</param>
+        /// <returns>true if <paramref name="item"/> is found in the collection node; otherwise, false.</returns>
+        public bool Contains(string item)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.StringArray:
+                    return _values.Contains(item);
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the collection node contains a specific value.
+        /// </summary>
+        /// <param name="item">The object to locate in the collection node.</param>
+        /// <returns>true if <paramref name="item"/> is found in the collection node; otherwise, false.</returns>
+        public bool Contains(ByamlPath item)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.PathArray:
+                    return _values.Contains(item);
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the collection node contains a specific key.
+        /// </summary>
+        /// <param name="key">The name of the key to locate in the collection node.</param>
+        /// <returns>true if <paramref name="key"/> is found in the collection node; otherwise, false.</returns>
+        public bool ContainsKey(string key)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.Dictionary:
+                    return _keys.Contains(key);
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Copies the elements of the collection node to an <see cref="Array"/>, starting at a particular
+        /// <see cref="Array"/> index.
+        /// </summary>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied
+        /// from collection node. The <see cref="Array"/> must have zero-based indexing.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array" /> at which copying begins.</param>
+        public void CopyTo(ByamlNode[] array, int arrayIndex)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.Array:
+                    _values.CopyTo(array, arrayIndex);
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <param name="other">An object to compare with this object.</param>
+        /// <returns>true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        public bool Equals(ByamlNode other)
+        {
+            if (other == null || Type != other.Type)
+            {
+                return false;
+            }
+            switch (Type)
+            {
+                case ByamlNodeType.StringIndex:
+                    return _string == other._string;
+                case ByamlNodeType.PathIndex:
+                    return _path == other._path;
+                case ByamlNodeType.Array:
+                case ByamlNodeType.StringArray:
+                case ByamlNodeType.PathArray:
+                    return _values.SequenceEqual(other._values);
+                case ByamlNodeType.Dictionary:
+                    return _keys.SequenceEqual(other._keys) && _values.SequenceEqual(other._values);
+                case ByamlNodeType.Boolean:
+                    return _boolean == other._boolean;
+                case ByamlNodeType.Integer:
+                    return _integer == other._integer;
+                case ByamlNodeType.Float:
+                    return _float == other._float;
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
@@ -674,380 +793,79 @@ namespace Syroot.NintenTools.Byaml
         /// Returns an enumerator that iterates through the collection.
         /// </summary>
         /// <returns>An enumerator that can be used to iterate through the collection.</returns>
+        public IEnumerator<ByamlNode> GetEnumerator()
+        {
+            return _values.GetEnumerator();
+        }
+        
+        /// <summary>
+        /// Returns an enumerator that iterates through a collection.
+        /// </summary>
+        /// <returns>An <see cref="IEnumerator"/> object that can be used to iterate through the collection.</returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
         /// <summary>
-        /// Returns an enumerator that iterates through the collection.
+        /// Determines the index of a specific item in the collection node.
         /// </summary>
-        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        IEnumerator<string> IEnumerable<string>.GetEnumerator()
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.StringArray:
-                    return _stringArray.GetEnumerator();
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection.
-        /// </summary>
-        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        IEnumerator<ByamlPath> IEnumerable<ByamlPath>.GetEnumerator()
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.PathArray:
-                    return _pathArray.GetEnumerator();
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Returns an enumerator that iterates through the collection.
-        /// </summary>
-        /// <returns>An enumerator that can be used to iterate through the collection.</returns>
-        IEnumerator<KeyValuePair<string, ByamlNode>> IEnumerable<KeyValuePair<string, ByamlNode>>.GetEnumerator()
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Dictionary:
-                    return _dictionary.GetEnumerator();
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Adds an item to the <see cref="ICollection"/>.
-        /// </summary>
-        /// <param name="item">The object to add to the <see cref="ICollection"/>.</param>
-        public void Add(ByamlNode item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Array:
-                    _array.Add(item);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Adds an element with the provided key and value to the <see cref="IDictionary"/>.
-        /// </summary>
-        /// <param name="key">The object to use as the key of the element to add.</param>
-        /// <param name="value">The object to use as the value of the element to add.</param>
-        public void Add(string key, ByamlNode value)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Dictionary:
-                    _dictionary.Add(key, value);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Adds an item to the <see cref="ICollection"/>.
-        /// </summary>
-        /// <param name="item">The object to add to the <see cref="ICollection"/>.</param>
-        public void Add(KeyValuePair<string, ByamlNode> item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Dictionary:
-                    _dictionary.Add(item.Key, item.Value);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Adds an item to the <see cref="ICollection"/>.
-        /// </summary>
-        /// <param name="item">The object to add to the <see cref="ICollection"/>.</param>
-        public void Add(string item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.StringArray:
-                    _stringArray.Add(item);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Adds an item to the <see cref="ICollection"/>.
-        /// </summary>
-        /// <param name="item">The object to add to the <see cref="ICollection"/>.</param>
-        public void Add(ByamlPath item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.PathArray:
-                    _pathArray.Add(item);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Removes all items from the <see cref="ICollection"/>.
-        /// </summary>
-        public void Clear()
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.StringArray:
-                    _stringArray.Clear();
-                    break;
-                case ByamlNodeType.PathArray:
-                    _pathArray.Clear();
-                    break;
-                case ByamlNodeType.Array:
-                    _array.Clear();
-                    break;
-                case ByamlNodeType.Dictionary:
-                    _dictionary.Clear();
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the <see cref="ICollection"/> contains a specific value.
-        /// </summary>
-        /// <param name="item">The object to locate in the <see cref="ICollection"/>.</param>
-        /// <returns>true if <paramref name="item"/> is found in the <see cref="ICollection"/>; otherwise, false.
-        /// </returns>
-        public bool Contains(ByamlNode item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Array:
-                    return _array.Contains(item);
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the <see cref="ICollection"/> contains a specific value.
-        /// </summary>
-        /// <param name="item">The object to locate in the <see cref="ICollection"/>.</param>
-        /// <returns>true if <paramref name="item"/> is found in the <see cref="ICollection"/>; otherwise, false.
-        /// </returns>
-        public bool Contains(KeyValuePair<string, ByamlNode> item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Dictionary:
-                    throw new NotImplementedException();
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the <see cref="ICollection"/> contains a specific value.
-        /// </summary>
-        /// <param name="item">The object to locate in the <see cref="ICollection"/>.</param>
-        /// <returns>true if <paramref name="item"/> is found in the <see cref="ICollection"/>; otherwise, false.
-        /// </returns>
-        public bool Contains(string item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.StringArray:
-                    return _stringArray.Contains(item);
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the <see cref="ICollection"/> contains a specific value.
-        /// </summary>
-        /// <param name="item">The object to locate in the <see cref="ICollection"/>.</param>
-        /// <returns>true if <paramref name="item"/> is found in the <see cref="ICollection"/>; otherwise, false.
-        /// </returns>
-        public bool Contains(ByamlPath item)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.PathArray:
-                    return _pathArray.Contains(item);
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the <see cref="IDictionary"/> contains an element with the specified key.
-        /// </summary>
-        /// <param name="key">The key to locate in the <see cref="IDictionary"/>.</param>
-        /// <returns>true if the <see cref="IDictionary"/> contains an element with the key; otherwise, false.
-        /// </returns>
-        public bool ContainsKey(string key)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Dictionary:
-                    return _dictionary.ContainsKey(key);
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Copies the elements of the <see cref="ICollection"/> to an <see cref="Array"/>, starting at a particular
-        /// <see cref="Array"/> index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied
-        /// from <see cref="ICollection"/>. The <see cref="Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        public void CopyTo(ByamlNode[] array, int arrayIndex)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Array:
-                    _array.CopyTo(array, arrayIndex);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Copies the elements of the <see cref="ICollection"/> to an <see cref="Array"/>, starting at a particular
-        /// <see cref="Array"/> index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied
-        /// from <see cref="ICollection"/>. The <see cref="Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        public void CopyTo(KeyValuePair<string, ByamlNode>[] array, int arrayIndex)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.Dictionary:
-                    throw new NotImplementedException();
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Copies the elements of the <see cref="ICollection"/> to an <see cref="Array"/>, starting at a particular
-        /// <see cref="Array"/> index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied
-        /// from <see cref="ICollection"/>. The <see cref="Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        public void CopyTo(string[] array, int arrayIndex)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.StringArray:
-                    _stringArray.CopyTo(array, arrayIndex);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Copies the elements of the <see cref="ICollection"/> to an <see cref="Array"/>, starting at a particular
-        /// <see cref="Array"/> index.
-        /// </summary>
-        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied
-        /// from <see cref="ICollection"/>. The <see cref="Array"/> must have zero-based indexing.</param>
-        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
-        public void CopyTo(ByamlPath[] array, int arrayIndex)
-        {
-            switch (Type)
-            {
-                case ByamlNodeType.PathArray:
-                    _pathArray.CopyTo(array, arrayIndex);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(Type);
-            }
-        }
-
-        /// <summary>
-        /// Determines the index of a specific item in the <see cref="IList"/>.
-        /// </summary>
-        /// <param name="item">The object to locate in the <see cref="IList"/>.</param>
+        /// <param name="item">The object to locate in the collection node.</param>
         /// <returns>The index of <paramref name="item"/> if found in the list; otherwise, -1.</returns>
         public int IndexOf(ByamlNode item)
         {
             switch (Type)
             {
                 case ByamlNodeType.Array:
-                    return _array.IndexOf(item);
+                    return _values.IndexOf(item);
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
         /// <summary>
-        /// Determines the index of a specific item in the <see cref="IList"/>.
+        /// Determines the index of a specific item in the collection node.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="IList"/>.</param>
+        /// <param name="item">The object to locate in the collection node.</param>
         /// <returns>The index of <paramref name="item"/> if found in the list; otherwise, -1.</returns>
         public int IndexOf(string item)
         {
             switch (Type)
             {
                 case ByamlNodeType.StringArray:
-                    return _stringArray.IndexOf(item);
+                    return _values.IndexOf(item);
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
         /// <summary>
-        /// Determines the index of a specific item in the <see cref="IList"/>.
+        /// Determines the index of a specific item in the collection node.
         /// </summary>
-        /// <param name="item">The object to locate in the <see cref="IList"/>.</param>
+        /// <param name="item">The object to locate in the collection node.</param>
         /// <returns>The index of <paramref name="item"/> if found in the list; otherwise, -1.</returns>
         public int IndexOf(ByamlPath item)
         {
             switch (Type)
             {
                 case ByamlNodeType.PathArray:
-                    return _pathArray.IndexOf(item);
+                    return _values.IndexOf(item);
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
         /// <summary>
-        /// Inserts an item to the <see cref="IList"/> at the specified index.
+        /// Inserts an item to the collection node at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
-        /// <param name="item">The object to insert into the <see cref="IList"/>.</param>
+        /// <param name="item">The object to insert into the collection node.</param>
         public void Insert(int index, ByamlNode item)
         {
             switch (Type)
             {
                 case ByamlNodeType.Array:
-                    _array.Insert(index, item);
+                    _values.Insert(index, item);
                     break;
                 default:
                     throw new ByamlNodeTypeException(Type);
@@ -1055,16 +873,16 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
-        /// Inserts an item to the <see cref="IList"/> at the specified index.
+        /// Inserts an item to the collection node at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
-        /// <param name="item">The object to insert into the <see cref="IList"/>.</param>
+        /// <param name="item">The object to insert into the collection node.</param>
         public void Insert(int index, string item)
         {
             switch (Type)
             {
                 case ByamlNodeType.StringArray:
-                    _stringArray.Insert(index, item);
+                    _values.Insert(index, item);
                     break;
                 default:
                     throw new ByamlNodeTypeException(Type);
@@ -1072,16 +890,16 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
-        /// Inserts an item to the <see cref="IList"/> at the specified index.
+        /// Inserts an item to the collection node at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
-        /// <param name="item">The object to insert into the <see cref="IList"/>.</param>
+        /// <param name="item">The object to insert into the collection node.</param>
         public void Insert(int index, ByamlPath item)
         {
             switch (Type)
             {
                 case ByamlNodeType.PathArray:
-                    _pathArray.Insert(index, item);
+                    _values.Insert(index, item);
                     break;
                 default:
                     throw new ByamlNodeTypeException(Type);
@@ -1089,97 +907,126 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
-        /// Removes the first occurrence of a specific object from the <see cref="ICollection"/>.
+        /// Removes the first occurrence of a specific object from the collection node.
         /// </summary>
-        /// <param name="item">The object to remove from the <see cref="ICollection"/>.</param>
-        /// <returns>true if <paramref name="item"/> was successfully removed from the <see cref="ICollection"/>;
-        /// otherwise, false. This method also returns false if <paramref name="item"/> is not found in the original
-        /// <see cref="ICollection"/>.</returns>
+        /// <param name="item">The object to remove from the collection node.</param>
+        /// <returns>true if <paramref name="item"/> was successfully removed from the collection node; otherwise,
+        /// false. This method also returns false if <paramref name="item"/> is not found in the original collection
+        /// node.</returns>
         public bool Remove(ByamlNode item)
         {
             switch (Type)
             {
                 case ByamlNodeType.Array:
-                    return _array.Remove(item);
+                    return _values.Remove(item);
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
         /// <summary>
-        /// Removes the first occurrence of a specific object from the <see cref="ICollection"/>.
+        /// Removes the first occurrence of a specific object from the collection node.
         /// </summary>
-        /// <param name="item">The object to remove from the <see cref="ICollection"/>.</param>
-        /// <returns>true if <paramref name="item"/> was successfully removed from the <see cref="ICollection"/>;
-        /// otherwise, false. This method also returns false if <paramref name="item"/> is not found in the original
-        /// <see cref="ICollection"/>.</returns>
+        /// <param name="item">The object to remove from the collection node.</param>
+        /// <returns>true if <paramref name="item"/> was successfully removed from the collection node; otherwise,
+        /// false. This method also returns false if <paramref name="item"/> is not found in the original collection
+        /// node.</returns>
         public bool Remove(KeyValuePair<string, ByamlNode> item)
         {
             switch (Type)
             {
                 case ByamlNodeType.Dictionary:
-                    throw new NotImplementedException();
+                    for (int i = 0; i < _values.Count; i++)
+                    {
+                        if (_keys[i] == item.Key)
+                        {
+                            if (_values[i] == item.Value)
+                            {
+
+                                _keys.RemoveAt(i);
+                                _values.RemoveAt(i);
+                                return true;
+                            }
+                            return false;
+                        }
+                    }
+                    return false;
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
         /// <summary>
-        /// Removes the first occurrence of a specific object from the <see cref="ICollection"/> or removes the element
-        /// with the specified key from the <see cref="IDictionary"/>.
+        /// Removes the first occurrence of a specific object or value with the given key from the collection node.
         /// </summary>
-        /// <param name="itemOrKey">The object to remove from the <see cref="ICollection"/> or the key of the element to
-        /// remove.</param>
-        /// <returns>true if the element is successfully removed; otherwise, false. This method also returns false if
-        /// <paramref name="itemOrKey"/> was not found in the original <see cref="ICollection"/> or
-        /// <see cref="IDictionary"/>.</returns>
+        /// <param name="item">The object or key of the value to remove from the collection node.</param>
+        /// <returns>true if <paramref name="item"/> was successfully removed from the collection node; otherwise,
+        /// false. This method also returns false if <paramref name="item"/> is not found in the original collection
+        /// node.</returns>
         public bool Remove(string itemOrKey)
         {
             switch (Type)
             {
-                case ByamlNodeType.StringArray:
-                    return _stringArray.Remove(itemOrKey);
                 case ByamlNodeType.Dictionary:
-                    return _dictionary.Remove(itemOrKey);
+                    for (int i = 0; i < _values.Count; i++)
+                    {
+                        if (_keys[i] == itemOrKey)
+                        {
+                            _keys.RemoveAt(i);
+                            _values.RemoveAt(i);
+                            return true;
+                        }
+                    }
+                    return false;
+                case ByamlNodeType.StringArray:
+                    return _values.Remove(itemOrKey);
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
         /// <summary>
-        /// Removes the first occurrence of a specific object from the <see cref="ICollection"/>.
+        /// Removes the first occurrence of a specific object from the collection node.
         /// </summary>
-        /// <param name="item">The object to remove from the <see cref="ICollection"/>.</param>
-        /// <returns>true if <paramref name="item"/> was successfully removed from the <see cref="ICollection"/>;
-        /// otherwise, false. This method also returns false if <paramref name="item"/> is not found in the original
-        /// <see cref="ICollection"/>.</returns>
+        /// <param name="item">The object to remove from the collection node.</param>
+        /// <returns>true if <paramref name="item"/> was successfully removed from the collection node; otherwise,
+        /// false. This method also returns false if <paramref name="item"/> is not found in the original collection
+        /// node.</returns>
         public bool Remove(ByamlPath item)
         {
             switch (Type)
             {
                 case ByamlNodeType.PathArray:
-                    return _pathArray.Remove(item);
+                    return _values.Remove(item);
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
         /// <summary>
-        /// Removes the <see cref="IList"/> item at the specified index.
+        /// Removes the collection node item at the specified index.
         /// </summary>
         /// <param name="index">The zero-based index of the item to remove.</param>
         public void RemoveAt(int index)
         {
             switch (Type)
             {
-                case ByamlNodeType.StringArray:
-                    _stringArray.RemoveAt(index);
-                    break;
-                case ByamlNodeType.PathArray:
-                    _pathArray.RemoveAt(index);
-                    break;
                 case ByamlNodeType.Array:
-                    _array.RemoveAt(index);
+                case ByamlNodeType.StringArray:
+                case ByamlNodeType.PathArray:
+                    _values.RemoveAt(index);
+                    break;
+                default:
+                    throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        public void Sort(StringComparison comparisonType)
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.StringArray:
+                    _values.Sort((x, y) => String.Compare((string)x, (string)y, comparisonType));
                     break;
                 default:
                     throw new ByamlNodeTypeException(Type);
@@ -1187,91 +1034,57 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
-        /// Gets the value associated with the specified key.
+        /// Tries to return the value under the given key.
         /// </summary>
-        /// <param name="key">The key whose value to get.</param>
-        /// <param name="value">When this method returns, the value associated with the specified key, if the key is
-        /// found; otherwise, the default value for the type of the <paramref name="value"/> parameter. This parameter
-        /// is passed uninitialized.</param>
-        /// <returns>true if the object that implements <see cref="IDictionary"/> contains an element with the
-        /// specified key; otherwise, false.</returns>
+        /// <param name="key">The key which value should be retrieved.</param>
+        /// <param name="value">The value if found.</param>
+        /// <returns>true if the value was found; otherwise, false.</returns>
         public bool TryGetValue(string key, out ByamlNode value)
         {
             switch (Type)
             {
                 case ByamlNodeType.Dictionary:
-                    return _dictionary.TryGetValue(key, out value);
+                    for (int i = 0; i < _values.Count; i++)
+                    {
+                        if (_keys[i] == key)
+                        {
+                            value = _values[i];
+                            return true;
+                        }
+                    }
+                    value = null;
+                    return false;
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
         }
 
-        // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
-
-        private void LoadArray(ByamlLoader loader, int length)
+        /// <summary>
+        /// Returns a <see cref="String" /> that represents this instance.
+        /// </summary>
+        /// <returns>A <see cref="String" /> that represents this instance.</returns>
+        public override string ToString()
         {
-            _array = new List<ByamlNode>();
-
-            // Read the element types of the array.
-            byte[] nodeTypes = loader.Reader.ReadBytes(length);
-            // Read the elements, which begin after a padding to the next 4 bytes.
-            loader.Reader.Align(4);
-            for (int i = 0; i < length; i++)
+            switch (Type)
             {
-                _array.Add(loader.LoadNode((ByamlNodeType)nodeTypes[i]));
+                case ByamlNodeType.StringIndex:
+                    return _string;
+                case ByamlNodeType.PathIndex:
+                    return _path.ToString();
+                case ByamlNodeType.Array:
+                case ByamlNodeType.Dictionary:
+                case ByamlNodeType.StringArray:
+                case ByamlNodeType.PathArray:
+                    return "Count = " + _values.Count.ToString();
+                case ByamlNodeType.Boolean:
+                    return _boolean.ToString();
+                case ByamlNodeType.Integer:
+                    return _integer.ToString();
+                case ByamlNodeType.Float:
+                    return _float.ToString();
+                default:
+                    throw new ByamlNodeTypeException(Type);
             }
-        }
-
-        private void LoadDictionary(ByamlLoader loader, int length)
-        {
-            _dictionary = new Dictionary<string, ByamlNode>();
-
-            // Read the elements of the dictionary.
-            for (int i = 0; i < length; i++)
-            {
-                uint idxAndType = loader.Reader.ReadUInt32();
-                int nodeNameIndex = (int)(idxAndType >> 8);
-                ByamlNodeType nodeType = (ByamlNodeType)(idxAndType & 0x000000FF);
-                string nodeName = (string)loader.NameArray[nodeNameIndex];
-                _dictionary.Add(nodeName, loader.LoadNode(nodeType));
-            }
-        }
-
-        private void LoadStringArray(ByamlLoader loader, int length)
-        {
-            _stringArray = new List<string>();
-
-            // Read the element offsets.
-            long nodeOffset = loader.Reader.Position - 4; // String offsets are relative to the start of node.
-            uint[] offsets = loader.Reader.ReadUInt32s(length);
-
-            // Read the strings by seeking to their element offset and then back.
-            long oldPosition = loader.Reader.Position;
-            for (int i = 0; i < length; i++)
-            {
-                loader.Reader.Seek(nodeOffset + offsets[i], SeekOrigin.Begin);
-                _stringArray.Add(loader.Reader.ReadString(BinaryStringFormat.ZeroTerminated));
-            }
-            loader.Reader.Seek(oldPosition, SeekOrigin.Begin);
-        }
-
-        private void LoadPathArray(ByamlLoader loader, int length)
-        {
-            _pathArray = new List<ByamlPath>();
-
-            // Read the element offsets.
-            long nodeOffset = loader.Reader.Position - 4; // Path offsets are relative to the start of node.
-            uint[] offsets = loader.Reader.ReadUInt32s(length + 1);
-
-            // Read the paths by seeking to their element offset and then back.
-            long oldPosition = loader.Reader.Position;
-            for (int i = 0; i < length; i++)
-            {
-                loader.Reader.Seek(nodeOffset + offsets[i]);
-                int pointCount = (int)((offsets[i + 1] - offsets[i]) / 0x1C);
-                _pathArray.Add(new ByamlPath(loader.Reader, pointCount));
-            }
-            loader.Reader.Seek(oldPosition, SeekOrigin.Begin);
         }
     }
 }

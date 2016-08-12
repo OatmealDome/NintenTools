@@ -113,12 +113,21 @@ namespace Syroot.NintenTools.IO
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
+        /// Allocates space for an <see cref="Offset"/> which can be satisfied later on.
+        /// </summary>
+        /// <returns>An <see cref="Offset"/> to satisfy later on.</returns>
+        public Offset ReserveOffset()
+        {
+            return new Offset(this);
+        }
+
+        /// <summary>
         /// Aligns the reader to the next given byte multiple..
         /// </summary>
         /// <param name="alignment">The byte multiple.</param>
         public void Align(int alignment)
         {
-            Seek(-Position % alignment);
+            Seek((-Position % alignment + alignment) % alignment);
         }
 
         /// <summary>
@@ -266,6 +275,15 @@ namespace Syroot.NintenTools.IO
         /// <param name="value">The value to write.</param>
         public override void Write(float value)
         {
+            if (_needsReversion)
+            {
+                byte[] bytes = BitConverter.GetBytes(value);
+                WriteReversed(bytes);
+            }
+            else
+            {
+                base.Write(value);
+            }
         }
         
         /// <summary>

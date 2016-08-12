@@ -70,7 +70,7 @@
     <Compile Include="Bfres\BfresIndexGroup.cs" />
     <Compile Include="Bfres\Gx2\Enumerations.cs" />
     <Compile Include="Byaml\ByamlException.cs" />
-    <Compile Include="Byaml\ByamlLoader.cs" />
+    <Compile Include="Byaml\ByamlFile.cs" />
     <Compile Include="Byaml\ByamlNode.cs" />
     <Compile Include="Byaml\ByamlNodeTypeException.cs" />
     <Compile Include="Byaml\ByamlNodeType.cs" />
@@ -78,9 +78,11 @@
     <Compile Include="Byaml\ByamlPathPoint.cs" />
     <Compile Include="IO\BinaryDataFormats.cs" />
     <Compile Include="IO\BinaryDataReader.cs" />
+    <Compile Include="IO\BinaryDataWriterExtensions.cs" />
     <Compile Include="IO\BinaryDataReaderExtensions.cs" />
     <Compile Include="IO\BinaryDataWriter.cs" />
     <Compile Include="IO\ByteOrder.cs" />
+    <Compile Include="IO\Offset.cs" />
     <Compile Include="IO\SeekTask.cs" />
     <Compile Include="Maths\IEquatableByRef.cs" />
     <Compile Include="Maths\INearlyEquatable.cs" />

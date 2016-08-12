@@ -4,8 +4,7 @@
     using Syroot.NintenTools.Maths;
 
     /// <summary>
-    /// Represents a set of extension methods for the <see cref="BinaryDataReader"/> class, specific to the BFRES
-    /// format.
+    /// Represents a set of extension methods for the <see cref="BinaryDataReader"/> class.
     /// </summary>
     internal static class BinaryDataReaderExtensions
     {

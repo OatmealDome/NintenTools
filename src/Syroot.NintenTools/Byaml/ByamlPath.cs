@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Syroot.NintenTools.IO;
 
 namespace Syroot.NintenTools.Byaml
@@ -6,22 +8,19 @@ namespace Syroot.NintenTools.Byaml
     /// <summary>
     /// Represents a path which is basically a list of <see cref="ByamlPathPoint"/> instances.
     /// </summary>
-    public class ByamlPath : List<ByamlPathPoint>
+    public class ByamlPath : List<ByamlPathPoint>, IEquatable<ByamlPath>
     {
-        // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
+        // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ByamlPath"/> class, reading the data from the given
-        /// <see cref="BinaryDataReader"/>.
+        /// Indicates whether the current object is equal to another object of the same type.
         /// </summary>
-        /// <param name="reader">The <see cref="BinaryDataReader"/> to read the data from.</param>
-        /// <param name="pointCount">The number of <see cref="ByamlPathPoint"/> instances this path has.</param>
-        internal ByamlPath(BinaryDataReader reader, int pointCount)
+        /// <param name="other">An object to compare with this object.</param>
+        /// <returns>true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        public bool Equals(ByamlPath other)
         {
-            for (int i = 0; i < pointCount; i++)
-            {
-                Add(new ByamlPathPoint(reader));
-            }
+            return this.SequenceEqual(other);
         }
     }
 }

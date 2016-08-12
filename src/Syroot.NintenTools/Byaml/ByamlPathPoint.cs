@@ -1,4 +1,4 @@
-﻿using Syroot.NintenTools.IO;
+﻿using System;
 using Syroot.NintenTools.Maths;
 
 namespace Syroot.NintenTools.Byaml
@@ -6,7 +6,7 @@ namespace Syroot.NintenTools.Byaml
     /// <summary>
     /// Represents a point in a <see cref="ByamlPath"/>.
     /// </summary>
-    public class ByamlPathPoint
+    public class ByamlPathPoint : IEquatable<ByamlPathPoint>
     {
         // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
 
@@ -18,17 +18,11 @@ namespace Syroot.NintenTools.Byaml
             Normal = new Vector3F(0, 1, 0);
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ByamlPathPoint"/> class, reading the data from the given
-        /// <see cref="BinaryDataReader"/>.
-        /// </summary>
-        /// <param name="reader">The <see cref="BinaryDataReader"/> to read the data from.</param>
-        internal ByamlPathPoint(BinaryDataReader reader)
-            : this()
+        public ByamlPathPoint(Vector3F position, Vector3F normal, uint unknown)
         {
-            Position = reader.ReadVector3F();
-            Normal = reader.ReadVector3F();
-            Unknown0x18 = reader.ReadUInt32();
+            Position = position;
+            Normal = normal;
+            Unknown = unknown;
         }
 
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------
@@ -36,28 +30,29 @@ namespace Syroot.NintenTools.Byaml
         /// <summary>
         /// Gets or sets the location.
         /// </summary>
-        public Vector3F Position
-        {
-            get;
-            set;
-        }
+        public Vector3F Position { get; set; }
 
         /// <summary>
         /// Gets or sets the normal.
         /// </summary>
-        public Vector3F Normal
-        {
-            get;
-            set;
-        }
+        public Vector3F Normal { get; set; }
 
         /// <summary>
         /// Gets or sets an unknown value.
         /// </summary>
-        public uint Unknown0x18
+        public uint Unknown { get; set; }
+
+        // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Indicates whether the current object is equal to another object of the same type.
+        /// </summary>
+        /// <param name="other">An object to compare with this object.</param>
+        /// <returns>true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
+        /// </returns>
+        public bool Equals(ByamlPathPoint other)
         {
-            get;
-            set;
+            return Position == other.Position && Normal == other.Normal && Unknown == other.Unknown;
         }
     }
 }
