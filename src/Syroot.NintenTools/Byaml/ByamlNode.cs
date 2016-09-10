@@ -136,6 +136,14 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="ByamlNode"/> class with node type Null.
+        /// </summary>
+        public ByamlNode()
+        {
+            Type = ByamlNodeType.Null;
+        }
+
+        /// <summary>
         /// Gets the <see cref="ByamlNode"/> at the given index.
         /// </summary>
         /// <param name="index">The index of the <see cref="ByamlNode"/> to retrieve.</param>
@@ -218,7 +226,7 @@ namespace Syroot.NintenTools.Byaml
         /// <summary>
         /// Gets the type of this node.
         /// </summary>
-        public ByamlNodeType Type { get; }
+        public ByamlNodeType Type;
 
         /// <summary>
         /// Gets the number of elements in the collection node.
@@ -519,26 +527,46 @@ namespace Syroot.NintenTools.Byaml
         /// Stores this node as a new BYAML file in the given stream.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to save the contents in.</param>
-        public void Save(Stream stream)
+        /// <param name="includePathArray">If the saved BYAML should have a path table offset.</param>
+        public void Save(Stream stream, bool includePathArray)
         {
             if (Type != ByamlNodeType.Array && Type != ByamlNodeType.Dictionary)
             {
                 throw new ByamlNodeTypeException("Only Array or Dictionary nodes can be saved as the BYAML root.");
             }
 
-            ByamlFile.Save(stream, this);
+            ByamlFile.Save(stream, this, includePathArray);
         }
 
         /// <summary>
         /// Stores this node as a new BYAML file in the file with the given name.
         /// </summary>
         /// <param name="fileName">The name of the file to save the contents in.</param>
-        public void Save(string fileName)
+        /// <param name="includePathArray">If the saved BYAML should have a path table offset.</param>
+        public void Save(string fileName, bool includePathArray)
         {
             using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                Save(stream);
+                Save(stream, includePathArray);
             }
+        }
+
+        /// <summary>
+        /// Stores this node as a new BYAML file in the given stream. A path table offset will be included.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> to save the contents in.</param>
+        public void Save(Stream stream)
+        {
+            Save(stream, true);
+        }
+
+        /// <summary>
+        /// Stores this node as a new BYAML file in the file with the given name. A path table offset will be included.
+        /// </summary>
+        /// <param name="fileName">The name of the file to save the contents in.</param>
+        public void Save(string fileName)
+        {
+            Save(fileName, true);
         }
 
         /// <summary>
@@ -784,6 +812,8 @@ namespace Syroot.NintenTools.Byaml
                     return _integer == other._integer;
                 case ByamlNodeType.Float:
                     return _float == other._float;
+                case ByamlNodeType.Null:
+                    return true;
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
@@ -1082,6 +1112,8 @@ namespace Syroot.NintenTools.Byaml
                     return _integer.ToString();
                 case ByamlNodeType.Float:
                     return _float.ToString();
+                case ByamlNodeType.Null:
+                    return "Null";
                 default:
                     throw new ByamlNodeTypeException(Type);
             }

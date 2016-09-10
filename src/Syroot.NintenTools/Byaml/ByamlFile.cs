@@ -35,10 +35,11 @@ namespace Syroot.NintenTools.Byaml
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to store the data in.</param>
         /// <param name="root">The <see cref="ByamlNode"/> to save.</param>
-        internal static void Save(Stream stream, ByamlNode root)
+        /// <param name="includePathArray">If the saved BYAML should have a path table offset.</param>
+        internal static void Save(Stream stream, ByamlNode root, bool includePathArray)
         {
             ByamlFile byamlFile = new ByamlFile();
-            byamlFile.Write(stream, root);
+            byamlFile.Write(stream, root, includePathArray);
         }
         
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
@@ -61,8 +62,8 @@ namespace Syroot.NintenTools.Byaml
                 }
                 uint nameArrayOffset = reader.ReadUInt32();
                 uint stringArrayOffset = reader.ReadUInt32();
-                uint pathArrayOffset = reader.ReadUInt32();
-                uint rootOffset = reader.ReadUInt32();
+                uint offsetThree = reader.ReadUInt32();
+                uint offsetFour = reader.ReadUInt32();
 
                 // Read the name array, holding strings referenced by index for the names of other nodes.
                 reader.Seek(nameArrayOffset, SeekOrigin.Begin);
@@ -75,16 +76,26 @@ namespace Syroot.NintenTools.Byaml
                     _stringArray = ReadNode(reader);
                 }
 
-                // Read the optional path array, holding paths referenced by index in path nodes.
-                if (pathArrayOffset != 0)
+                if (offsetFour > reader.Length)
                 {
-                    reader.Seek(pathArrayOffset, SeekOrigin.Begin);
-                    _pathArray = ReadNode(reader);
+                    // Splatoon BYAMLs are weird because they don't include a path array offset.
+                    reader.Seek(offsetThree, SeekOrigin.Begin);
+                    return ReadNode(reader);
                 }
+                else
+                {
+                    // This is a more sane BYAML with a path array offset.
+                    // Read the optional path array, holding paths referenced by index in path nodes.
+                    if (offsetThree != 0)
+                    {
+                        reader.Seek(offsetThree, SeekOrigin.Begin);
+                        _pathArray = ReadNode(reader);
+                    }
 
-                // Read the root node.
-                reader.Seek(rootOffset, SeekOrigin.Begin);
-                return ReadNode(reader);
+                    // Read the root node.
+                    reader.Seek(offsetFour, SeekOrigin.Begin);
+                    return ReadNode(reader);
+                }
             }
         }
 
@@ -152,6 +163,9 @@ namespace Syroot.NintenTools.Byaml
                         return new ByamlNode(reader.ReadInt32());
                     case ByamlNodeType.Float:
                         return new ByamlNode(reader.ReadSingle());
+                    case ByamlNodeType.Null:
+                        reader.Seek(4);
+                        return new ByamlNode();
                     default:
                         throw new ByamlException(String.Format("Unknown node type '{0}'.", nodeType));
                 }
@@ -251,7 +265,7 @@ namespace Syroot.NintenTools.Byaml
             return point;
         }
 
-        private void Write(Stream stream, ByamlNode root)
+        private void Write(Stream stream, ByamlNode root, bool includePathArray)
         {
             // Generate the name, string and path array nodes.
             _nameArray = new ByamlNode(new List<string>());
@@ -271,8 +285,19 @@ namespace Syroot.NintenTools.Byaml
                 writer.Write((short)0x0001);
                 Offset nameArrayOffset = writer.ReserveOffset();
                 Offset stringArrayOffset = writer.ReserveOffset();
-                Offset pathArrayOffset = writer.ReserveOffset();
-                Offset rootOffset = writer.ReserveOffset();
+                Offset offsetThree = null;
+                Offset offsetFour = null;
+
+                if (!includePathArray)
+                {
+                    // This file will not have a path array offset.
+                    offsetThree = writer.ReserveOffset();
+                }
+                else
+                {
+                    offsetThree = writer.ReserveOffset();
+                    offsetFour = writer.ReserveOffset();
+                }
 
                 // Write the main nodes.
                 WriteValueContents(writer, nameArrayOffset, _nameArray);
@@ -284,15 +309,23 @@ namespace Syroot.NintenTools.Byaml
                 {
                     WriteValueContents(writer, stringArrayOffset, _stringArray);
                 }
-                if (_pathArray.Count == 0)
+
+                if (!includePathArray)
                 {
-                    writer.Write(0);
+                    WriteValueContents(writer, offsetThree, root);
                 }
                 else
                 {
-                    WriteValueContents(writer, pathArrayOffset, _pathArray);
+                    if (_pathArray.Count == 0)
+                    {
+                        writer.Write(0);
+                    }
+                    else
+                    {
+                        WriteValueContents(writer, offsetThree, _pathArray);
+                    }
+                    WriteValueContents(writer, offsetFour, root);
                 }
-                WriteValueContents(writer, rootOffset, root);
             }
         }
 
@@ -351,6 +384,9 @@ namespace Syroot.NintenTools.Byaml
                     return null;
                 case ByamlNodeType.Float:
                     writer.Write((float)value);
+                    return null;
+                case ByamlNodeType.Null:
+                    writer.Write(0);
                     return null;
                 default:
                     throw new ByamlNodeTypeException(value.Type);

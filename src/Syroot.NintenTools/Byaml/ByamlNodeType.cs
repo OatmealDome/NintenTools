@@ -48,6 +48,11 @@
         /// <summary>
         /// The node represents a <see cref="System.Single"/>.
         /// </summary>
-        Float = 0xD2
+        Float = 0xD2,
+
+        /// <summary>
+        /// The node represents null.
+        /// </summary>
+        Null = 0xFF
     }
 }
