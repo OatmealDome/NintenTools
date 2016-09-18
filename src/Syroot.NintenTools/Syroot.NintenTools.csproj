@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Syroot.IO.BinaryData, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Syroot.IO.BinaryData.1.0.0\lib\net45\Syroot.IO.BinaryData.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
@@ -76,14 +80,8 @@
     <Compile Include="Byaml\ByamlNodeType.cs" />
     <Compile Include="Byaml\ByamlPath.cs" />
     <Compile Include="Byaml\ByamlPathPoint.cs" />
-    <Compile Include="IO\BinaryDataFormats.cs" />
-    <Compile Include="IO\BinaryDataReader.cs" />
     <Compile Include="IO\BinaryDataWriterExtensions.cs" />
     <Compile Include="IO\BinaryDataReaderExtensions.cs" />
-    <Compile Include="IO\BinaryDataWriter.cs" />
-    <Compile Include="IO\ByteOrder.cs" />
-    <Compile Include="IO\Offset.cs" />
-    <Compile Include="IO\SeekTask.cs" />
     <Compile Include="Maths\IEquatableByRef.cs" />
     <Compile Include="Maths\INearlyEquatable.cs" />
     <Compile Include="Maths\INearlyEquatableByRef.cs" />
@@ -98,7 +96,9 @@
     <Compile Include="Yaz0\Yaz0Exception.cs" />
     <Compile Include="Yaz0\Yaz0Compression.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

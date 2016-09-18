@@ -1,5 +1,6 @@
 ﻿namespace Syroot.NintenTools.Bfres.Fshu
 {
+    using Syroot.IO;
     using Syroot.NintenTools.IO;
 
     /// <summary>

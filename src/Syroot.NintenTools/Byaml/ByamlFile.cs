@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Syroot.IO;
 using Syroot.NintenTools.IO;
 
 namespace Syroot.NintenTools.Byaml

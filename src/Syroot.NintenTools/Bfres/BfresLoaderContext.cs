@@ -1,6 +1,7 @@
 ﻿namespace Syroot.NintenTools.Bfres
 {
     using System.Collections.Generic;
+    using Syroot.IO;
     using Syroot.NintenTools.IO;
 
     /// <summary>

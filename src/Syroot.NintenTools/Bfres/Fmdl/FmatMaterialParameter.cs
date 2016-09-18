@@ -2,6 +2,7 @@
 {
     using System;
     using System.Diagnostics;
+    using Syroot.IO;
     using Syroot.NintenTools.IO;
     using Syroot.NintenTools.Maths;
 

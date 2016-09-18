@@ -1,6 +1,7 @@
 ﻿namespace Syroot.NintenTools.Yaz0
 {
     using System.IO;
+    using Syroot.IO;
     using Syroot.NintenTools.IO;
 
     /// <summary>

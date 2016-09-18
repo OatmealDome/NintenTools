@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using Syroot.IO;
     using Syroot.NintenTools.Bfres.Embedded;
     using Syroot.NintenTools.Bfres.Fmdl;
     using Syroot.NintenTools.Bfres.Fscn;

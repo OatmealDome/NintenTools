@@ -1,5 +1,6 @@
 ﻿namespace Syroot.NintenTools.IO
 {
+    using Syroot.IO;
     using Syroot.NintenTools.Bfres;
     using Syroot.NintenTools.Maths;
 
