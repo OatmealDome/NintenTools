@@ -7,7 +7,7 @@
     /// Represents a three-dimensional vector which uses float values.
     /// </summary>
     public struct Vector3F : IEquatable<Vector3F>, IEquatableByRef<Vector3F>, INearlyEquatable<Vector3F>,
-        INearlyEquatableByRef<Vector3F>
+        INearlyEquatableByRef<Vector3F>, ICloneable
     {
         // ---- CONSTANTS ----------------------------------------------------------------------------------------------
 
@@ -273,6 +273,15 @@
         public bool NearlyEquals(ref Vector3F other)
         {
             return X.NearlyEquals(other.X) && Y.NearlyEquals(other.Y) && Z.NearlyEquals(other.Z);
+        }
+
+        /// <summary>
+        /// Clones this instance of <see cref="Vector3F"/>.
+        /// </summary>
+        /// <returns>A clone of this <see cref="Vector3F"/>.</returns>
+        public object Clone()
+        {
+            return new Vector3F(X, Y, Z);
         }
     }
 }

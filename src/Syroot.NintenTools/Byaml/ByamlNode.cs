@@ -13,7 +13,7 @@ namespace Syroot.NintenTools.Byaml
     /// <remarks>This is more or less a direct port of the Python API. The code might not be optimal for the CLR due to
     /// the dynamic approach used in Python.</remarks>
     [DebuggerDisplay("{Type}, {ToString()}")]
-    public class ByamlNode : IList<ByamlNode>, IEquatable<ByamlNode>
+    public class ByamlNode : IList<ByamlNode>, IEquatable<ByamlNode>, ICloneable
     {
         // ---- MEMBERS ------------------------------------------------------------------------------------------------
 
@@ -1087,6 +1087,59 @@ namespace Syroot.NintenTools.Byaml
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
+        }
+
+        public Object Clone()
+        {
+            switch (Type)
+            {
+                case ByamlNodeType.StringIndex:
+                    return new ByamlNode((String)_string.Clone());
+                case ByamlNodeType.PathIndex:
+                    return new ByamlNode((ByamlPath)_path.Clone());
+                case ByamlNodeType.Array:
+                    List<ByamlNode> nodeList = new List<ByamlNode>();
+                    foreach (ByamlNode node in _values)
+                    {
+                        nodeList.Add((ByamlNode)node.Clone());
+                    }
+
+                    return new ByamlNode(nodeList);
+                case ByamlNodeType.Dictionary:
+                    Dictionary<string, ByamlNode> dictionary = new Dictionary<string, ByamlNode>();
+                    foreach (String key in _keys)
+                    {
+                        dictionary.Add((String)key.Clone(), (ByamlNode)this[key].Clone());
+                    }
+
+                    return new ByamlNode(dictionary);
+                case ByamlNodeType.StringArray:
+                    List<String> strings = new List<String>();
+                    foreach (String str in _values)
+                    {
+                        strings.Add((String)str.Clone());
+                    }
+
+                    return new ByamlNode(strings);
+                case ByamlNodeType.PathArray:
+                    List<ByamlPath> pathArray = new List<ByamlPath>();
+                    foreach (ByamlPath path in _values)
+                    {
+                        pathArray.Add((ByamlPath)path.Clone());
+                    }
+
+                    return new ByamlNode(pathArray);
+                case ByamlNodeType.Boolean:
+                    return new ByamlNode(_boolean ?? default(bool));
+                case ByamlNodeType.Integer:
+                    return new ByamlNode(_integer ?? default(int));
+                case ByamlNodeType.Float:
+                    return new ByamlNode(_float ?? default(float));
+                case ByamlNodeType.Null:
+                    return new ByamlNode();
+            }
+
+            throw new ByamlNodeTypeException();
         }
 
         /// <summary>

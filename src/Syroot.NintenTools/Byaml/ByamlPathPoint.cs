@@ -6,7 +6,7 @@ namespace Syroot.NintenTools.Byaml
     /// <summary>
     /// Represents a point in a <see cref="ByamlPath"/>.
     /// </summary>
-    public class ByamlPathPoint : IEquatable<ByamlPathPoint>
+    public class ByamlPathPoint : IEquatable<ByamlPathPoint>, ICloneable
     {
         // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
 
@@ -53,6 +53,11 @@ namespace Syroot.NintenTools.Byaml
         public bool Equals(ByamlPathPoint other)
         {
             return Position == other.Position && Normal == other.Normal && Unknown == other.Unknown;
+        }
+
+        public object Clone()
+        {
+            return new ByamlPathPoint((Vector3F)Position.Clone(), (Vector3F)Normal.Clone(), Unknown);
         }
     }
 }

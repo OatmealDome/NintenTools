@@ -8,7 +8,7 @@ namespace Syroot.NintenTools.Byaml
     /// <summary>
     /// Represents a path which is basically a list of <see cref="ByamlPathPoint"/> instances.
     /// </summary>
-    public class ByamlPath : List<ByamlPathPoint>, IEquatable<ByamlPath>
+    public class ByamlPath : List<ByamlPathPoint>, IEquatable<ByamlPath>, ICloneable
     {
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
@@ -21,6 +21,17 @@ namespace Syroot.NintenTools.Byaml
         public bool Equals(ByamlPath other)
         {
             return this.SequenceEqual(other);
+        }
+
+        public object Clone()
+        {
+            ByamlPath path = new ByamlPath();
+            foreach (ByamlPathPoint pathPoint in this)
+            {
+                path.Add((ByamlPathPoint)pathPoint.Clone());
+            }
+
+            return path;
         }
     }
 }
