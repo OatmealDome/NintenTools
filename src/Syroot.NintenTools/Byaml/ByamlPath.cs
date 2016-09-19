@@ -23,6 +23,10 @@ namespace Syroot.NintenTools.Byaml
             return this.SequenceEqual(other);
         }
 
+        /// <summary>
+        /// Creates a clone of this <see cref="ByamlPath"/>.
+        /// </summary>
+        /// <returns>A clone of this path.</returns>
         public object Clone()
         {
             ByamlPath path = new ByamlPath();

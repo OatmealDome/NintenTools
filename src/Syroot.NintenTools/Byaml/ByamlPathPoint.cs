@@ -55,6 +55,10 @@ namespace Syroot.NintenTools.Byaml
             return Position == other.Position && Normal == other.Normal && Unknown == other.Unknown;
         }
 
+        /// <summary>
+        /// Creates a clone of this <see cref="ByamlPathPoint"/>
+        /// </summary>
+        /// <returns>A clone of this path point.</returns>
         public object Clone()
         {
             return new ByamlPathPoint((Vector3F)Position.Clone(), (Vector3F)Normal.Clone(), Unknown);

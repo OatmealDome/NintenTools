@@ -1089,6 +1089,10 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
+        /// <summary>
+        /// Creates a clone of this <see cref="ByamlNode"/>.
+        /// </summary>
+        /// <returns>A clone of this node.</returns>
         public Object Clone()
         {
             switch (Type)

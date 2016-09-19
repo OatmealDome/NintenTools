@@ -278,7 +278,7 @@
         /// <summary>
         /// Clones this instance of <see cref="Vector3F"/>.
         /// </summary>
-        /// <returns>A clone of this <see cref="Vector3F"/>.</returns>
+        /// <returns>A clone of this vector.</returns>
         public object Clone()
         {
             return new Vector3F(X, Y, Z);
