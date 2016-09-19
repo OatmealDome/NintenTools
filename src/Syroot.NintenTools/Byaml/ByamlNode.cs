@@ -1166,7 +1166,7 @@ namespace Syroot.NintenTools.Byaml
                 case ByamlNodeType.Float:
                     return _float.ToString();
                 case ByamlNodeType.Null:
-                    return "Null";
+                    return "(null)";
                 default:
                     throw new ByamlNodeTypeException(Type);
             }
