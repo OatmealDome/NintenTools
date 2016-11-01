@@ -13,18 +13,20 @@ namespace Syroot.NintenTools.Byaml
     /// <remarks>This is more or less a direct port of the Python API. The code might not be optimal for the CLR due to
     /// the dynamic approach used in Python.</remarks>
     [DebuggerDisplay("{Type}, {ToString()}")]
-    public class ByamlNode : IList<ByamlNode>, IEquatable<ByamlNode>
+    public class ByamlNode : IList<ByamlNode>, IEquatable<ByamlNode>, IConvertible
     {
         // ---- MEMBERS ------------------------------------------------------------------------------------------------
 
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)] private List<string>    _keys;
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)] private List<ByamlNode> _values;
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private List<string> _keys;
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private List<ByamlNode> _values;
 
-        private string    _string;
+        private string _string;
         private ByamlPath _path;
-        private bool?     _boolean;
-        private int?      _integer;
-        private float?    _float;
+        private bool? _boolean;
+        private int? _integer;
+        private float? _float;
 
         // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
 
@@ -212,7 +214,7 @@ namespace Syroot.NintenTools.Byaml
                 }
             }
         }
-        
+
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -281,7 +283,7 @@ namespace Syroot.NintenTools.Byaml
                 }
             }
         }
-        
+
         // ---- OPERATORS ----------------------------------------------------------------------------------------------
 
         /// <summary>
@@ -436,7 +438,7 @@ namespace Syroot.NintenTools.Byaml
 
             return node._values.ConvertAll(x => (string)x);
         }
-        
+
         /// <summary>
         /// Gets the <see cref="List{ByamlPath}"/> value of this node.
         /// </summary>
@@ -489,7 +491,7 @@ namespace Syroot.NintenTools.Byaml
             }
             return node._float.Value;
         }
-        
+
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
@@ -797,7 +799,7 @@ namespace Syroot.NintenTools.Byaml
         {
             return _values.GetEnumerator();
         }
-        
+
         /// <summary>
         /// Returns an enumerator that iterates through a collection.
         /// </summary>
@@ -805,6 +807,16 @@ namespace Syroot.NintenTools.Byaml
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        /// <summary>
+        /// Returns the <see cref="TypeCode"/> for this instance.
+        /// </summary>
+        /// <returns>The enumerated constant that is the <see cref="TypeCode"/> of the class or value type that
+        /// implements this interface.</returns>
+        public TypeCode GetTypeCode()
+        {
+            return TypeCode.Object;
         }
 
         /// <summary>
@@ -1021,6 +1033,10 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
+        /// <summary>
+        /// Sorts a <see cref="ByamlNodeType.StringArray"/> node.
+        /// </summary>
+        /// <param name="comparisonType">The comparison type to use for sorting.</param>
         public void Sort(StringComparison comparisonType)
         {
             switch (Type)
@@ -1060,6 +1076,146 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
+        /// Converts the value of this instance to an equivalent <see cref="Boolean"/> value if the node type is of
+        /// <see cref="ByamlNodeType.Boolean"/>.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        /// <returns>A <see cref="Boolean"/> value equivalent to the value of this instance.</returns>
+        public bool ToBoolean(IFormatProvider provider)
+        {
+            if (Type != ByamlNodeType.Boolean)
+            {
+                throw new InvalidCastException();
+            }
+            return _boolean.Value;
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public byte ToByte(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public char ToChar(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public DateTime ToDateTime(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public decimal ToDecimal(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Converts the value of this instance to an equivalent double-precision floating-point number using the
+        /// specified culture-specific formatting information.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        /// <returns></returns>
+        public double ToDouble(IFormatProvider provider)
+        {
+            if (Type != ByamlNodeType.Float)
+            {
+                throw new InvalidCastException();
+            }
+            return _float.Value;
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public short ToInt16(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Converts the value of this instance to an equivalent 32-bit signed integer using the specified
+        /// culture-specific formatting information.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        /// <returns></returns>
+        public int ToInt32(IFormatProvider provider)
+        {
+            if (Type != ByamlNodeType.Integer)
+            {
+                throw new InvalidCastException();
+            }
+            return _integer.Value;
+        }
+
+        /// <summary>
+        /// Converts the value of this instance to an equivalent 64-bit signed integer using the specified
+        /// culture-specific formatting information.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        /// <returns></returns>
+        public long ToInt64(IFormatProvider provider)
+        {
+            if (Type != ByamlNodeType.Integer)
+            {
+                throw new InvalidCastException();
+            }
+            return _integer.Value;
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public sbyte ToSByte(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Converts the value of this instance to an equivalent single-precision floating-point number using the
+        /// specified culture-specific formatting information.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        /// <returns></returns>
+        public float ToSingle(IFormatProvider provider)
+        {
+            if (Type != ByamlNodeType.Float)
+            {
+                throw new InvalidCastException();
+            }
+            return _float.Value;
+        }
+
+        /// <summary>
         /// Returns a <see cref="String" /> that represents this instance.
         /// </summary>
         /// <returns>A <see cref="String" /> that represents this instance.</returns>
@@ -1084,6 +1240,125 @@ namespace Syroot.NintenTools.Byaml
                     return _float.ToString();
                 default:
                     throw new ByamlNodeTypeException(Type);
+            }
+        }
+
+        /// <summary>
+        /// Converts the value of this instance to an equivalent <see cref="String"/> using the specified
+        /// culture-specific formatting information.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        /// <returns>A <see cref="String"/> value equivalent to the value of this instance.</returns>
+        public string ToString(IFormatProvider provider)
+        {
+            if (Type != ByamlNodeType.StringIndex)
+            {
+                throw new InvalidCastException();
+            }
+            return _string;
+        }
+
+        /// <summary>
+        /// Converts the value of this instance to an <see cref="Object"/> of the specified <see cref="Type"/> that has
+        /// an equivalent value, using the specified culture-specific formatting information.
+        /// </summary>
+        /// <param name="conversionType">The <see cref="Type"/> to which the value of this instance is converted.
+        /// </param>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        /// <returns>An <see cref="Object"/> instance of type <paramref name="conversionType"/> whose value is
+        /// equivalent to the value of this instance.</returns>
+        public object ToType(Type conversionType, IFormatProvider provider)
+        {
+            // Self conversion.
+            if (conversionType == typeof(ByamlNode))
+            {
+                return this;
+            }
+            // Nullable types.
+            else if (conversionType == typeof(bool?) && Type == ByamlNodeType.Boolean)
+            {
+                return _boolean;
+            }
+            else if (conversionType == typeof(int?) && Type == ByamlNodeType.Integer)
+            {
+                return _integer;
+            }
+            else if (conversionType == typeof(float?) && Type == ByamlNodeType.Float)
+            {
+                return _float;
+            }
+            // Complex types.
+            else if (conversionType == typeof(ByamlPath) && Type == ByamlNodeType.PathIndex)
+            {
+                return _path;
+            }
+            else if (conversionType == typeof(List<ByamlNode>) && Type == ByamlNodeType.Array)
+            {
+                return _values;
+            }
+            else if (conversionType == typeof(Dictionary<string, ByamlNode>) && Type == ByamlNodeType.Dictionary)
+            {
+                Dictionary<string, ByamlNode> dictionary = new Dictionary<string, ByamlNode>();
+                for (int i = 0; i < _keys.Count; i++)
+                {
+                    dictionary.Add(_keys[i], _values[i]);
+                }
+                return dictionary;
+            }
+            else if (conversionType == typeof(List<string>) && Type == ByamlNodeType.StringArray)
+            {
+                return _values.ConvertAll(x => (string)x);
+            }
+            else if (conversionType == typeof(List<ByamlPath>) && Type == ByamlNodeType.PathArray)
+            {
+                return _values.ConvertAll(x => (ByamlPath)x);
+            }
+            // Any other types which can be handled by the default IConvertible methods.
+            else
+            {
+                return Convert.ChangeType(this, conversionType, provider);
+            }
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public ushort ToUInt16(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public uint ToUInt32(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        /// <summary>
+        /// Throws a <see cref="InvalidCastException"/> as nodes do not support this type.
+        /// </summary>
+        /// <param name="provider">An <see cref="IFormatProvider"/> interface implementation that supplies
+        /// culture-specific formatting information.</param>
+        public ulong ToUInt64(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
+
+        private void ThrowIfInconvertible(ByamlNodeType requiredType)
+        {
+            if (Type != requiredType)
+            {
+                throw new InvalidCastException("Cannot convert node of type " + requiredType.ToString());
             }
         }
     }
