@@ -9,7 +9,7 @@ Usage
 
 Right now, the following usage cases are possible:
 - [YAZ0](https://github.com/Syroot/NintenTools/wiki/Yaz0) compressed files can be decompressed.
-- [BYAML](https://github.com/Syroot/NintenTools/wiki/BYAML) files can be loaded and queried trivially like `(int)byaml["Obj"][1]["UnitIdNum"]`.
+- [BYAML](https://github.com/Syroot/NintenTools/wiki/BYAML) files can be loaded and queried dynamically like `byaml["Obj"][1]["UnitIdNum"]`.
 - [BFRES](https://github.com/Syroot/NintenTools/wiki/BFRES) files can be loaded and their structure inspected (deprecated classes, need update).
 
 Contributing
