@@ -1,12 +1,12 @@
 ﻿namespace Syroot.NintenTools.Byaml
 {
     /// <summary>
-    /// Represents the type of which a <see cref="ByamlNode"/> can be.
+    /// Represents the type of which a dynamic BYAML node can be.
     /// </summary>
-    public enum ByamlNodeType : byte
+    internal enum ByamlNodeType : byte
     {
         /// <summary>
-        /// The node represents a <see cref="String"/> (internally referenced by index).
+        /// The node represents a <see cref="string"/> (internally referenced by index).
         /// </summary>
         StringIndex = 0xA0,
 
@@ -16,17 +16,17 @@
         PathIndex = 0xA1,
 
         /// <summary>
-        /// The node represents an array of child <see cref="ByamlNode"/> instances.
+        /// The node represents an array of dynamic child instances.
         /// </summary>
         Array = 0xC0,
 
         /// <summary>
-        /// The node represents a dictionary of child <see cref="ByamlNode"/> instances.
+        /// The node represents a dictionary of dynamic child instances referenced by a <see cref="string"/> key.
         /// </summary>
         Dictionary = 0xC1,
 
         /// <summary>
-        /// The node represents an array of <see cref="System.String"/> instances.
+        /// The node represents an array of <see cref="string"/> instances.
         /// </summary>
         StringArray = 0xC2,
 
@@ -36,17 +36,17 @@
         PathArray = 0xC3,
 
         /// <summary>
-        /// The node represents a <see cref="System.Boolean"/>.
+        /// The node represents a <see cref="bool"/>.
         /// </summary>
         Boolean = 0xD0,
 
         /// <summary>
-        /// The node represents an <see cref="System.Int32"/>.
+        /// The node represents an <see cref="int"/>.
         /// </summary>
         Integer = 0xD1,
 
         /// <summary>
-        /// The node represents a <see cref="System.Single"/>.
+        /// The node represents a <see cref="float"/>.
         /// </summary>
         Float = 0xD2
     }
