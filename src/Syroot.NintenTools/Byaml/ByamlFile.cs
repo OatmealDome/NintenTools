@@ -9,42 +9,78 @@ using Syroot.NintenTools.IO;
 namespace Syroot.NintenTools.Byaml
 {
     /// <summary>
-    /// Represents the loading and saving logic of BYAML files and returns the resulting file structure.
+    /// Represents the loading and saving logic of BYAML files and returns the resulting file structure in dynamic
+    /// objects.
     /// </summary>
-    internal class ByamlFile
+    public class ByamlFile
     {
         // ---- MEMBERS ------------------------------------------------------------------------------------------------
-        
-        private ByamlNode _nameArray;
-        private ByamlNode _stringArray;
-        private ByamlNode _pathArray;
-        
+
+        private List<string> _nameArray;
+        private List<string> _stringArray;
+        private List<ByamlPath> _pathArray;
+
+        // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
+
+        private ByamlFile()
+        {
+        }
+
         // ---- METHODS (INTERNAL) -------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Deserializes and returns the <see cref="ByamlNode"/> read from the specified stream.
+        /// Deserializes and returns the dynamic value of the BYAML node read from the given file.
+        /// </summary>
+        /// <param name="fileName">The name of the file to read the data from.</param>
+        public static dynamic Load(string fileName)
+        {
+            using (FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                return Load(stream);
+            }
+        }
+
+        /// <summary>
+        /// Deserializes and returns the dynamic value of the BYAML node read from the specified stream.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to read the data from.</param>
-        internal static ByamlNode Load(Stream stream)
+        public static dynamic Load(Stream stream)
         {
             ByamlFile byamlFile = new ByamlFile();
             return byamlFile.Read(stream);
         }
 
         /// <summary>
-        /// Serializes the given <see cref="ByamlNode"/> and stores it in the specified stream.
+        /// Serializes the given dynamic value which requires to be an array or dictionary of BYAML compatible values
+        /// and stores it in the given file.
+        /// </summary>
+        /// <param name="stream">The name of the file to store the data in.</param>
+        /// <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
+        /// BYAML compatible values.</param>
+        public static void Save(string fileName, dynamic root)
+        {
+            using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                Save(stream, root);
+            }
+        }
+
+        /// <summary>
+        /// Serializes the given dynamic value which requires to be an array or dictionary of BYAML compatible values
+        /// and stores it in the specified stream.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to store the data in.</param>
-        /// <param name="root">The <see cref="ByamlNode"/> to save.</param>
-        internal static void Save(Stream stream, ByamlNode root)
+        /// <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
+        /// BYAML compatible values.</param>
+        public static void Save(Stream stream, dynamic root)
         {
             ByamlFile byamlFile = new ByamlFile();
             byamlFile.Write(stream, root);
         }
-        
+
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
 
-        private ByamlNode Read(Stream stream)
+        private dynamic Read(Stream stream)
         {
             // Open a reader on the given stream.
             using (BinaryDataReader reader = new BinaryDataReader(stream, Encoding.ASCII, true))
@@ -52,14 +88,8 @@ namespace Syroot.NintenTools.Byaml
                 reader.ByteOrder = ByteOrder.BigEndian;
 
                 // Load the header, specifying magic bytes, version and main node offsets.
-                if (reader.ReadString(2) != "BY")
-                {
-                    throw new ByamlException("Invalid BYAML header.");
-                }
-                if (reader.ReadUInt16() != 0x0001)
-                {
-                    throw new ByamlException("Unsupported BYAML version.");
-                }
+                if (reader.ReadString(2) != "BY") throw new ByamlException("Invalid BYAML header.");
+                if (reader.ReadUInt16() != 0x0001) throw new ByamlException("Unsupported BYAML version.");
                 uint nameArrayOffset = reader.ReadUInt32();
                 uint stringArrayOffset = reader.ReadUInt32();
                 uint pathArrayOffset = reader.ReadUInt32();
@@ -89,7 +119,7 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
-        private ByamlNode ReadNode(BinaryDataReader reader, ByamlNodeType nodeType = 0)
+        private dynamic ReadNode(BinaryDataReader reader, ByamlNodeType nodeType = 0)
         {
             // Read the node type if it has not been provided yet.
             bool nodeTypeGiven = nodeType != 0;
@@ -113,7 +143,7 @@ namespace Syroot.NintenTools.Byaml
                     reader.Seek(-1);
                 }
                 int length = (int)(reader.ReadUInt32() & 0x00FFFFFF);
-                ByamlNode value = null;
+                dynamic value = null;
                 switch (nodeType)
                 {
                     case ByamlNodeType.Array:
@@ -140,28 +170,28 @@ namespace Syroot.NintenTools.Byaml
             }
             else
             {
-                // Read the following UInt32 representing the value directly.
+                // Read the following UInt32 which is representing the value directly.
                 switch (nodeType)
                 {
                     case ByamlNodeType.StringIndex:
-                        return new ByamlNode((string)_stringArray[reader.ReadInt32()]);
+                        return _stringArray[reader.ReadInt32()];
                     case ByamlNodeType.PathIndex:
-                        return new ByamlNode((ByamlPath)_pathArray[reader.ReadInt32()]);
+                        return _pathArray[reader.ReadInt32()];
                     case ByamlNodeType.Boolean:
-                        return new ByamlNode(reader.ReadInt32() != 0);
+                        return reader.ReadInt32() != 0;
                     case ByamlNodeType.Integer:
-                        return new ByamlNode(reader.ReadInt32());
+                        return reader.ReadInt32();
                     case ByamlNodeType.Float:
-                        return new ByamlNode(reader.ReadSingle());
+                        return reader.ReadSingle();
                     default:
                         throw new ByamlException(String.Format("Unknown node type '{0}'.", nodeType));
                 }
             }
         }
 
-        private ByamlNode ReadArrayNode(BinaryDataReader reader, int length)
+        private List<dynamic> ReadArrayNode(BinaryDataReader reader, int length)
         {
-            List<ByamlNode> array = new List<ByamlNode>();
+            List<dynamic> array = new List<dynamic>(length);
 
             // Read the element types of the array.
             byte[] nodeTypes = reader.ReadBytes(length);
@@ -172,12 +202,12 @@ namespace Syroot.NintenTools.Byaml
                 array.Add(ReadNode(reader, (ByamlNodeType)nodeTypes[i]));
             }
 
-            return new ByamlNode(array);
+            return array;
         }
 
-        private ByamlNode ReadDictionaryNode(BinaryDataReader reader, int length)
+        private Dictionary<string, dynamic> ReadDictionaryNode(BinaryDataReader reader, int length)
         {
-            Dictionary<string, ByamlNode> dictionary = new Dictionary<string, ByamlNode>();
+            Dictionary<string, dynamic> dictionary = new Dictionary<string, dynamic>();
 
             // Read the elements of the dictionary.
             for (int i = 0; i < length; i++)
@@ -185,16 +215,16 @@ namespace Syroot.NintenTools.Byaml
                 uint idxAndType = reader.ReadUInt32();
                 int nodeNameIndex = (int)(idxAndType >> 8);
                 ByamlNodeType nodeType = (ByamlNodeType)(idxAndType & 0x000000FF);
-                string nodeName = (string)_nameArray[nodeNameIndex];
+                string nodeName = _nameArray[nodeNameIndex];
                 dictionary.Add(nodeName, ReadNode(reader, nodeType));
             }
 
-            return new ByamlNode(dictionary);
+            return dictionary;
         }
 
-        private ByamlNode ReadStringArrayNode(BinaryDataReader reader, int length)
+        private List<string> ReadStringArrayNode(BinaryDataReader reader, int length)
         {
-            List<string> stringArray = new List<string>();
+            List<string> stringArray = new List<string>(length);
 
             // Read the element offsets.
             long nodeOffset = reader.Position - 4; // String offsets are relative to the start of node.
@@ -209,12 +239,12 @@ namespace Syroot.NintenTools.Byaml
             }
             reader.Seek(oldPosition, SeekOrigin.Begin);
 
-            return new ByamlNode(stringArray);
+            return stringArray;
         }
 
-        private ByamlNode ReadPathArrayNode(BinaryDataReader reader, int length)
+        private List<ByamlPath> ReadPathArrayNode(BinaryDataReader reader, int length)
         {
-            List<ByamlPath> pathArray = new List<ByamlPath>();
+            List<ByamlPath> pathArray = new List<ByamlPath>(length);
 
             // Read the element offsets.
             long nodeOffset = reader.Position - 4; // Path offsets are relative to the start of node.
@@ -230,7 +260,7 @@ namespace Syroot.NintenTools.Byaml
             }
             reader.Seek(oldPosition, SeekOrigin.Begin);
 
-            return new ByamlNode(pathArray);
+            return pathArray;
         }
 
         private ByamlPath ReadPath(BinaryDataReader reader, int length)
@@ -252,15 +282,15 @@ namespace Syroot.NintenTools.Byaml
             return point;
         }
 
-        private void Write(Stream stream, ByamlNode root)
+        private void Write(Stream stream, dynamic root)
         {
             // Generate the name, string and path array nodes.
-            _nameArray = new ByamlNode(new List<string>());
-            _stringArray = new ByamlNode(new List<string>());
-            _pathArray = new ByamlNode(new List<ByamlPath>());
+            _nameArray = new List<string>();
+            _stringArray = new List<string>();
+            _pathArray = new List<ByamlPath>();
             CollectNodeArrayContents(root);
-            _nameArray.Sort(StringComparison.Ordinal);
-            _stringArray.Sort(StringComparison.Ordinal);
+            _nameArray.Sort(StringComparer.Ordinal);
+            _stringArray.Sort(StringComparer.Ordinal);
 
             // Open a writer on the given stream.
             using (BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.ASCII, true))
@@ -297,124 +327,141 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
-        private void CollectNodeArrayContents(ByamlNode node)
+        private void CollectNodeArrayContents(dynamic node)
         {
-            switch (node.Type)
+            if (node is string)
             {
-                case ByamlNodeType.StringIndex:
-                    if (!_stringArray.Contains((string)node))
+                if (!_stringArray.Contains((string)node))
+                {
+                    _stringArray.Add((string)node);
+                }
+            }
+            else if (node is ByamlPath)
+            {
+                _pathArray.Add((ByamlPath)node);
+            }
+            else if (node is IList<dynamic>)
+            {
+                foreach (dynamic childNode in node)
+                {
+                    CollectNodeArrayContents(childNode);
+                }
+            }
+            else if (node is IDictionary<string, dynamic>)
+            {
+                foreach (KeyValuePair<string, dynamic> entry in node)
+                {
+                    if (!_nameArray.Contains(entry.Key))
                     {
-                        _stringArray.Add((string)node);
+                        _nameArray.Add(entry.Key);
                     }
-                    break;
-                case ByamlNodeType.PathIndex:
-                    _pathArray.Add((ByamlPath)node);
-                    break;
-                case ByamlNodeType.Array:
-                    foreach (ByamlNode childNode in node)
-                    {
-                        CollectNodeArrayContents(childNode);
-                    }
-                    break;
-                case ByamlNodeType.Dictionary:
-                    foreach (KeyValuePair<string, ByamlNode> entry in (Dictionary<string, ByamlNode>)node)
-                    {
-                        if (!_nameArray.Contains(entry.Key))
-                        {
-                            _nameArray.Add(entry.Key);
-                        }
-                        CollectNodeArrayContents(entry.Value);
-                    }
-                    break;
+                    CollectNodeArrayContents(entry.Value);
+                }
             }
         }
 
-        private Offset WriteValue(BinaryDataWriter writer, ByamlNode value)
+        private Offset WriteValue(BinaryDataWriter writer, dynamic value)
         {
             // Only reserve and return an offset for the complex value contents, write simple values directly.
-            switch (value.Type)
+            if (value is string)
             {
-                case ByamlNodeType.StringIndex:
-                    WriteStringIndexNode(writer, value);
-                    return null;
-                case ByamlNodeType.PathIndex:
-                    WritePathIndexNode(writer, value);
-                    return null;
-                case ByamlNodeType.Array:
-                    return writer.ReserveOffset();
-                case ByamlNodeType.Dictionary:
-                    return writer.ReserveOffset();
-                case ByamlNodeType.Boolean:
-                    writer.Write((bool)value ? 1 : 0);
-                    return null;
-                case ByamlNodeType.Integer:
-                    writer.Write((int)value);
-                    return null;
-                case ByamlNodeType.Float:
-                    writer.Write((float)value);
-                    return null;
-                default:
-                    throw new ByamlNodeTypeException(value.Type);
+                WriteStringIndexNode(writer, value);
+                return null;
+            }
+            else if (value is ByamlPath)
+            {
+                WritePathIndexNode(writer, value);
+                return null;
+            }
+            else if (value is IList<dynamic>)
+            {
+                return writer.ReserveOffset();
+            }
+            else if (value is IDictionary<string, dynamic>)
+            {
+                return writer.ReserveOffset();
+            }
+            else if (value is bool)
+            {
+                writer.Write((bool)value ? 1 : 0);
+                return null;
+            }
+            else if (value is int)
+            {
+                writer.Write((int)value);
+                return null;
+            }
+            else if (value is float)
+            {
+                writer.Write((float)value);
+                return null;
+            }
+            else
+            {
+                throw new ByamlException(value);
             }
         }
 
-        private void WriteValueContents(BinaryDataWriter writer, Offset offset, ByamlNode value)
+        private void WriteValueContents(BinaryDataWriter writer, Offset offset, dynamic value)
         {
             // Satisfy the offset to the complex node value which must be 4-byte aligned.
             writer.Align(4);
             offset.Satisfy();
 
             // Write the value contents.
-            switch (value.Type)
+            if (value is IList<dynamic>)
             {
-                case ByamlNodeType.Array:
-                    WriteArrayNode(writer, value);
-                    break;
-                case ByamlNodeType.Dictionary:
-                    WriteDictionaryNode(writer, value);
-                    break;
-                case ByamlNodeType.StringArray:
-                    WriteStringArrayNode(writer, value);
-                    break;
-                case ByamlNodeType.PathArray:
-                    WritePathArrayNode(writer, value);
-                    break;
-                default:
-                    throw new ByamlNodeTypeException(value.Type);
+                WriteArrayNode(writer, value);
+            }
+            else if (value is IDictionary<string, dynamic>)
+            {
+                WriteDictionaryNode(writer, value);
+            }
+            else if (value is IList<string>)
+            {
+                WriteStringArrayNode(writer, value);
+            }
+            else if (value is IList<ByamlPath>)
+            {
+                WritePathArrayNode(writer, value);
+            }
+            else
+            {
+                throw new ByamlException(value);
             }
         }
 
-        private void WriteTypeAndLength(BinaryDataWriter writer, ByamlNode node)
+        private void WriteTypeAndLength(BinaryDataWriter writer, dynamic node)
         {
-            uint value = (uint)node.Type << 24;
+            uint value = (uint)GetNodeType(node) << 24;
             value |= (uint)node.Count;
             writer.Write(value);
         }
 
-        private void WriteStringIndexNode(BinaryDataWriter writer, ByamlNode node)
+        private void WriteStringIndexNode(BinaryDataWriter writer, string node)
         {
-            writer.Write(_stringArray.IndexOf((string)node));
+            writer.Write(_stringArray.IndexOf(node));
         }
 
-        private void WritePathIndexNode(BinaryDataWriter writer, ByamlNode node)
+        private void WritePathIndexNode(BinaryDataWriter writer, ByamlPath node)
         {
-            writer.Write(_pathArray.IndexOf((ByamlPath)node));
+            writer.Write(_pathArray.IndexOf(node));
         }
 
-        private void WriteArrayNode(BinaryDataWriter writer, ByamlNode node)
+        private void WriteArrayNode(BinaryDataWriter writer, IList<dynamic> node)
         {
             WriteTypeAndLength(writer, node);
 
             // Write the element types.
-            foreach (ByamlNode element in node)
+            foreach (dynamic element in node)
             {
-                writer.Write((byte)element.Type);
+                writer.Write((byte)GetNodeType(element));
             }
 
             // Write the elements, which begin after a padding to the next 4 bytes.
             writer.Align(4);
-            List<Offset> offsets = new List<Offset>();
-            foreach (ByamlNode element in node)
+            List<Offset> offsets = new List<Offset>(node.Count);
+            foreach (dynamic element in node)
             {
                 offsets.Add(WriteValue(writer, element));
             }
@@ -430,7 +477,7 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
-        private void WriteDictionaryNode(BinaryDataWriter writer, ByamlNode node)
+        private void WriteDictionaryNode(BinaryDataWriter writer, IDictionary<string, dynamic> node)
         {
             WriteTypeAndLength(writer, node);
 
@@ -439,12 +486,12 @@ namespace Syroot.NintenTools.Byaml
                 .OrderBy(x => x.Key).ToList();
 
             // Write the key-value pairs.
-            List<Offset> offsets = new List<Offset>();
+            List<Offset> offsets = new List<Offset>(node.Count);
             foreach (var keyValuePair in sortedDict)
             {
                 // Get the index of the key string in the file's name array and write it together with the type.
                 uint keyIndex = (uint)_nameArray.IndexOf(keyValuePair.Key);
-                writer.Write(keyIndex << 8 | (uint)keyValuePair.Value.Type);
+                writer.Write(keyIndex << 8 | (uint)GetNodeType(keyValuePair.Value));
 
                 // Write the elements.
                 offsets.Add(WriteValue(writer, keyValuePair.Value));
@@ -461,7 +508,7 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
-        private void WriteStringArrayNode(BinaryDataWriter writer, ByamlNode node)
+        private void WriteStringArrayNode(BinaryDataWriter writer, IList<string> node)
         {
             writer.Align(4);
             WriteTypeAndLength(writer, node);
@@ -482,7 +529,7 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
-        private void WritePathArrayNode(BinaryDataWriter writer, ByamlNode node)
+        private void WritePathArrayNode(BinaryDataWriter writer, IList<ByamlPath> node)
         {
             writer.Align(4);
             WriteTypeAndLength(writer, node);
@@ -503,9 +550,9 @@ namespace Syroot.NintenTools.Byaml
             }
         }
 
-        private void WritePathNode(BinaryDataWriter writer, ByamlNode node)
+        private void WritePathNode(BinaryDataWriter writer, ByamlPath node)
         {
-            foreach (ByamlPathPoint point in (ByamlPath)node)
+            foreach (ByamlPathPoint point in node)
             {
                 WritePathPoint(writer, point);
             }
@@ -516,6 +563,20 @@ namespace Syroot.NintenTools.Byaml
             writer.Write(point.Position);
             writer.Write(point.Normal);
             writer.Write(point.Unknown);
+        }
+
+        private ByamlNodeType GetNodeType(dynamic node)
+        {
+            if (node is string) return ByamlNodeType.StringIndex;
+            else if (node is ByamlPath) return ByamlNodeType.PathIndex;
+            else if (node is IList<dynamic>) return ByamlNodeType.Array;
+            else if (node is IDictionary<string, dynamic>) return ByamlNodeType.Dictionary;
+            else if (node is IList<string>) return ByamlNodeType.StringArray;
+            else if (node is IList<ByamlPath>) return ByamlNodeType.PathArray;
+            else if (node is bool) return ByamlNodeType.Boolean;
+            else if (node is int) return ByamlNodeType.Integer;
+            else if (node is float) return ByamlNodeType.Float;
+            else throw new ByamlException(node);
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Syroot.NintenTools.Test
     internal class Program
     {
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
-        
+
         private static void Main(string[] args)
         {
             TestByaml();
@@ -40,14 +40,14 @@ namespace Syroot.NintenTools.Test
             {
                 bytesDecompressed = Yaz0Compression.Decompress(input, output);
             }
-            
+
             Console.WriteLine("successfully decompressed {0} bytes.", bytesDecompressed);
         }
 
         private static void LoadBfresFile(Stream dataStream)
         {
             Console.Write("Loading BFRES data... ");
-            
+
             // Load the BFRES data from the start of the given stream.
             BfresFile bfresFile = new BfresFile();
             dataStream.Position = 0;
@@ -65,8 +65,8 @@ namespace Syroot.NintenTools.Test
 
         private static void TestByaml()
         {
-            ByamlNode byaml = ByamlNode.Load(@"D:\\test.byaml");
-            foreach (ByamlNode objNode in byaml["Obj"])
+            dynamic byaml = ByamlFile.Load(@"D:\\test.byaml");
+            foreach (dynamic objNode in byaml["Obj"])
             {
                 Console.WriteLine((int)objNode["ObjId"]);
                 foreach (float param in objNode["Params"])

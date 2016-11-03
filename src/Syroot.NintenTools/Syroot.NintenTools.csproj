@@ -30,6 +30,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Syroot.IO.BinaryData, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Syroot.IO.BinaryData.1.0.0\lib\net45\Syroot.IO.BinaryData.dll</HintPath>
       <Private>True</Private>
@@ -75,8 +76,6 @@
     <Compile Include="Bfres\Gx2\Enumerations.cs" />
     <Compile Include="Byaml\ByamlException.cs" />
     <Compile Include="Byaml\ByamlFile.cs" />
-    <Compile Include="Byaml\ByamlNode.cs" />
-    <Compile Include="Byaml\ByamlNodeTypeException.cs" />
     <Compile Include="Byaml\ByamlNodeType.cs" />
     <Compile Include="Byaml\ByamlPath.cs" />
     <Compile Include="Byaml\ByamlPathPoint.cs" />

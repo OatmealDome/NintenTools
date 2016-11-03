@@ -14,7 +14,8 @@ namespace Syroot.NintenTools.Byaml
         /// <summary>
         /// Initializes a new instance of the <see cref="ByamlException"/> class.
         /// </summary>
-        public ByamlException()
+        public ByamlException(dynamic value)
+            : base($"The type of {value} is not supported by BYAML.")
         {
         }
 
