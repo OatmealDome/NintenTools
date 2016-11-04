@@ -79,6 +79,7 @@
     <Compile Include="Byaml\ByamlNodeType.cs" />
     <Compile Include="Byaml\ByamlPath.cs" />
     <Compile Include="Byaml\ByamlPathPoint.cs" />
+    <Compile Include="Byaml\IByamlSerializable.cs" />
     <Compile Include="IO\BinaryDataWriterExtensions.cs" />
     <Compile Include="IO\BinaryDataReaderExtensions.cs" />
     <Compile Include="Maths\IEquatableByRef.cs" />

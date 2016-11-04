@@ -26,7 +26,7 @@ namespace Syroot.NintenTools.Byaml
         {
         }
 
-        // ---- METHODS (INTERNAL) -------------------------------------------------------------------------------------
+        // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
         /// Deserializes and returns the dynamic value of the BYAML node read from the given file.
@@ -76,6 +76,86 @@ namespace Syroot.NintenTools.Byaml
         {
             ByamlFile byamlFile = new ByamlFile();
             byamlFile.Write(stream, root);
+        }
+
+        // ---- Helper methods ----
+
+        /// <summary>
+        /// Tries to retrieve the value of the element with the specified <paramref name="key"/> stored in the given
+        /// dictionary <paramref name="node"/>. If the key does not exist, <c>null</c> is returned.
+        /// </summary>
+        /// <param name="node">The dictionary BYAML node to retrieve the value from.</param>
+        /// <param name="key">The key of the value to retrieve.</param>
+        /// <returns>The value stored under the given key or <c>null</c> if the key is not present.</returns>
+        public static dynamic GetValue(IDictionary<string, dynamic> node, string key)
+        {
+            dynamic value;
+            return node.TryGetValue(key, out value) ? value : null;
+        }
+
+        /// <summary>
+        /// Sets the given <paramref name="value"/> in the provided dictionary <paramref name="node"/> under the
+        /// specified <paramref name="key"/>. If the value is <c>null</c>, the key is removed from the dictionary node.
+        /// </summary>
+        /// <param name="node">The dictionary node to store the value under.</param>
+        /// <param name="key">The key under which the value will be stored or which will be removed.</param>
+        /// <param name="value">The value to store under the key or <c>null</c> to remove the key.</param>
+        public static void SetValue(IDictionary<string, dynamic> node, string key, dynamic value)
+        {
+            if (value == null)
+            {
+                node.Remove(key);
+            }
+            else
+            {
+                node[key] = value;
+            }
+        }
+
+        /// <summary>
+        /// Casts all elements of the given array <paramref name="node"/> into the provided type
+        /// <typeparamref name="T"/>. If the node is <c>null</c>, <c>null</c> is returned.
+        /// </summary>
+        /// <typeparam name="T">The type to cast each element to.</typeparam>
+        /// <param name="node">The array node which elements will be casted.</param>
+        /// <returns>The list of type <typeparamref name="T"/> or <c>null</c> if the node is <c>null</c>.</returns>
+        public static List<T> GetList<T>(IEnumerable<dynamic> node)
+        {
+            return node?.Cast<T>().ToList();
+        }
+
+        /// <summary>
+        /// Calls the <see cref="IByamlSerializable.DeserializeByaml(dynamic)"/> method implemented by
+        /// <typeparamref name="T"/> on each element in the given array <paramref name="node"/> and returns the typed
+        /// list. If the node is <c>null</c>, <c>null</c> is returned.
+        /// </summary>
+        /// <typeparam name="T">The type which implements <see cref="IByamlSerializable"/>.</typeparam>
+        /// <param name="node">The array node which elements will be deserialized.</param>
+        /// <returns>The list of deserialized elements of type <typeparamref name="T"/> or <c>null</c> if the node is
+        /// <c>null</c>.</returns>
+        public static List<T> DeserializeList<T>(IEnumerable<dynamic> node)
+            where T : IByamlSerializable, new()
+        {
+            return node?.Select(x =>
+            {
+                T element = new T();
+                element.DeserializeByaml(x);
+                return element;
+            }).ToList();
+        }
+
+        /// <summary>
+        /// Calls the <see cref="IByamlSerializable.SerializeByaml()"/> method implemented by <typeparamref name="T"/>
+        /// and returns the dynamic array node representing the given <typeparamref name="list"/>. If the node is
+        /// <c>null</c>, <c>null</c> is returned.
+        /// </summary>
+        /// <typeparam name="T">The type which implements <see cref="IByamlSerializable"/>.</typeparam>
+        /// <param name="list">The list which elements will be serialized.</param>
+        /// <returns>The dynamic array node or <c>null</c> if the list is <c>null</c>.</returns>
+        public static IEnumerable<dynamic> SerializeList<T>(List<T> list)
+            where T : IByamlSerializable
+        {
+            return list?.Select(x => x.SerializeByaml());
         }
 
         // ---- METHODS (PRIVATE) --------------------------------------------------------------------------------------
