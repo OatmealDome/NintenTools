@@ -1,24 +1,24 @@
-﻿namespace Syroot.NintenTools.Bfres
-{
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using Syroot.IO;
-    using Syroot.NintenTools.Bfres.Embedded;
-    using Syroot.NintenTools.Bfres.Fmdl;
-    using Syroot.NintenTools.Bfres.Fscn;
-    using Syroot.NintenTools.Bfres.Fsha;
-    using Syroot.NintenTools.Bfres.Fshu;
-    using Syroot.NintenTools.Bfres.Fska;
-    using Syroot.NintenTools.Bfres.Ftex;
-    using Syroot.NintenTools.Bfres.Ftxp;
-    using Syroot.NintenTools.Bfres.Fvis;
-    using Syroot.NintenTools.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using Syroot.IO;
+using Syroot.NintenTools.Bfres.Embedded;
+using Syroot.NintenTools.Bfres.Fmdl;
+using Syroot.NintenTools.Bfres.Fscn;
+using Syroot.NintenTools.Bfres.Fsha;
+using Syroot.NintenTools.Bfres.Fshu;
+using Syroot.NintenTools.Bfres.Fska;
+using Syroot.NintenTools.Bfres.Ftex;
+using Syroot.NintenTools.Bfres.Ftxp;
+using Syroot.NintenTools.Bfres.Fvis;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres
+{
     /// <summary>
     /// Represents a BFRES file and its contents.
     /// </summary>
-    [Obsolete("The BFRES API requires a big update. Use on your own fault.")]
+    /// <remarks>This API is obsolete and requires an update.</remarks>
     public class BfresFile
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------

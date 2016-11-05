@@ -1,12 +1,12 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
-    using Syroot.IO;
-    using Syroot.NintenTools.Bfres.Ftex;
-    using Syroot.NintenTools.IO;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using Syroot.IO;
+using Syroot.NintenTools.Bfres.Ftex;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an FMAT subsection in a FMDL section which describes a material to draw polygons with.
     /// </summary>
@@ -342,7 +342,7 @@
 
             /// <summary>
             /// Gets or sets the number of <see cref="FmatTextureAttributeSelector"/> instances in the
-            /// <see cref="TextureAttributeSelector"/> list.
+            /// <see cref="TextureAttributeSelectors"/> list.
             /// </summary>
             public byte TextureAttributeSelectorCount
             {

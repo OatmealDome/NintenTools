@@ -1,33 +1,34 @@
-﻿namespace Syroot.NintenTools.Maths
-{
-    using System;
+﻿using System;
+using System.Globalization;
 
+namespace Syroot.NintenTools.Maths
+{
     /// <summary>
-    /// Represents a set of mathematical extension methods.
+    /// Represents a set of mathematical (extension) methods.
     /// </summary>
-    public static class Maths
+    public static class Algebra
     {
         // ---- CONSTANTS ----------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant, π.
+        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant π.
         /// </summary>
         public const float Pi = (float)Math.PI;
 
         /// <summary>
-        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant, π, divided
+        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant π, divided
         /// two times.
         /// </summary>
         public const float PiOver2 = (float)(Math.PI / 2.0);
 
         /// <summary>
-        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant, π, divided
+        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant π, divided
         /// four times.
         /// </summary>
         public const float PiOver4 = (float)(Math.PI / 4.0);
 
         /// <summary>
-        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant, π, divided
+        /// Represents the ratio of the circumference of a circle to its diameter, specified by the constant π, divided
         /// eight times.
         /// </summary>
         public const float PiOver8 = (float)(Math.PI / 8.0);
@@ -132,6 +133,38 @@
 
             // Use relative error
             return difference / (absCurrent + absOther) < _floatEqualityEpsilon;
+        }
+
+        /// <summary>
+        /// Parses the string to a float while allowing a trailing 'f' character.
+        /// </summary>
+        /// <param name="text">The string to parse.</param>
+        /// <returns>The parsed float.</returns>
+        public static float ToFloat(this string text)
+        {
+            return float.Parse(text.TrimEnd('f'), CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>
+        /// Parses the string to a float while allowing a trailing 'f' character. The return value might be <c>null</c>
+        /// if it cannot be parsed.
+        /// </summary>
+        /// <param name="text">The string to parse.</param>
+        /// <returns>The parsed float or <c>null</c> if it could not be parsed..</returns>
+        public static float? ToFloatNull(this string text)
+        {
+            float result;
+            return float.TryParse(text.TrimEnd('f'), NumberStyles.Any, CultureInfo.InvariantCulture, out result) ? (float?)result : null;
+        }
+
+        /// <summary>
+        /// Converts the string to a float with a trailing 'f' character.
+        /// </summary>
+        /// <param name="value">The float to convert.</param>
+        /// <returns>The converted string.</returns>
+        public static string ToFloatString(this float value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture) + "f";
         }
     }
 }

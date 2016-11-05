@@ -50,12 +50,12 @@
     /// by the texture unit. Note that the two components have different number formats, and only the depth part can be
     /// sampled with any filter more complex than point-sampling. It is needed to use T_R24_UNorm_X8 for reading depth
     /// buffer as texture and T_X24_G8_UInt for reading stencil buffer as texture. See
-    /// <see cref="ConvertDepthBufferToTextureSurface()"/> for more information.
+    /// ConvertDepthBufferToTextureSurface() for more information.
     ///
     /// Note 2: Similar to depth format D_D24_S8_UNorm and texture formats T_R24_UNorm_X8 and T_X24_G8_UInt, format
     /// D_D32_Float_S8_UInt_X24 is a depth/stencil buffer format while T_R32_Float_X8_X24 and T_X32_G8_UInt_X24 are
-    /// texture formats used to read the depth and stencil data, respectively. See
-    /// <see cref="ConvertDepthBufferToTextureSurface()"/> for more information.
+    /// texture formats used to read the depth and stencil data, respectively. See ConvertDepthBufferToTextureSurface()
+    /// for more information.
     ///
     /// Note 3: The NV12 format is a special case for video. It actually consists of two surfaces (an 8-bit surface
     /// &amp; a 1/4-size 16-bit surface). It is only usable in certain situations.

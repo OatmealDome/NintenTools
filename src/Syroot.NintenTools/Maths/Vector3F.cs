@@ -1,13 +1,15 @@
-﻿namespace Syroot.NintenTools.Maths
-{
-    using System;
-    using System.Globalization;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using Syroot.NintenTools.Byaml;
 
+namespace Syroot.NintenTools.Maths
+{
     /// <summary>
     /// Represents a three-dimensional vector which uses float values.
     /// </summary>
     public struct Vector3F : IEquatable<Vector3F>, IEquatableByRef<Vector3F>, INearlyEquatable<Vector3F>,
-        INearlyEquatableByRef<Vector3F>
+        INearlyEquatableByRef<Vector3F>, IComparable, IByamlSerializable
     {
         // ---- CONSTANTS ----------------------------------------------------------------------------------------------
 
@@ -62,6 +64,18 @@
             X = x;
             Y = y;
             Z = z;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Vector3"/> struct from the given BYAML dictionary node.
+        /// </summary>
+        /// <param name="node">The BYAML dictionary node to load the data from.</param>
+        public Vector3F(IDictionary<string, dynamic> node)
+        {
+            X = 0;
+            Y = 0;
+            Z = 0;
+            DeserializeByaml(node);
         }
 
         // ---- OPERATORS ----------------------------------------------------------------------------------------------
@@ -177,6 +191,30 @@
         }
 
         /// <summary>
+        /// Gets a value indicating whether the components of the first specified <see cref="Vector3F"/> are bigger than
+        /// the components of the second specified <see cref="Vector3F"/>.
+        /// </summary>
+        /// <param name="a">The first <see cref="Vector3F"/> to compare.</param>
+        /// <param name="b">The second <see cref="Vector3F"/> to compare.</param>
+        /// <returns>true, if the components of the first <see cref="Vector3F"/> are bigger than the second.</returns>
+        public static bool operator >(Vector3F a, Vector3F b)
+        {
+            return a.X > b.X && a.Y > b.X && a.Z > b.Z;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the components of the first specified <see cref="Vector3F"/> are smaller
+        /// than the components of the second specified <see cref="Vector3F"/>.
+        /// </summary>
+        /// <param name="a">The first <see cref="Vector3F"/> to compare.</param>
+        /// <param name="b">The second <see cref="Vector3F"/> to compare.</param>
+        /// <returns>true, if the components of the first <see cref="Vector3F"/> are smaller than the second.</returns>
+        public static bool operator <(Vector3F a, Vector3F b)
+        {
+            return a.X < b.X && a.Y < b.X && a.Z < b.Z;
+        }
+
+        /// <summary>
         /// Implicit conversion from <see cref="Vector3"/>.
         /// </summary>
         /// <param name="size">The <see cref="Vector3"/> to convert from.</param>
@@ -273,6 +311,52 @@
         public bool NearlyEquals(ref Vector3F other)
         {
             return X.NearlyEquals(other.X) && Y.NearlyEquals(other.Y) && Z.NearlyEquals(other.Z);
+        }
+
+        /// <summary>
+        /// Compares the current instance with another <see cref="Vector3F"/> and returns an integer that indicates
+        /// whether the current instance precedes, follows, or occurs in the same position in the sort order as the
+        /// other object.
+        /// </summary>
+        /// <param name="obj">An object to compare with this instance.</param>
+        /// <returns>A value that indicates the relative order of the <see cref="Vector3F"/> instances being compared.
+        /// </returns>
+        public int CompareTo(object obj)
+        {
+            Vector3F? other = obj as Vector3F?;
+            if (other.HasValue)
+            {
+                return this > other ? 1 : this < other ? -1 : 0;
+            }
+            else
+            {
+                throw new ArgumentException($"{nameof(obj)} must be a {nameof(Vector3F)}.", nameof(obj));
+            }
+        }
+
+        /// <summary>
+        /// Reads the data from the given dynamic BYAML node into the instance.
+        /// </summary>
+        /// <param name="node">The dynamic BYAML node to deserialize.</param>
+        public void DeserializeByaml(dynamic node)
+        {
+            X = node["X"];
+            Y = node["Y"];
+            Z = node["Z"];
+        }
+
+        /// <summary>
+        /// Creates a dynamic BYAML node from the instance's data.
+        /// </summary>
+        /// <returns>The dynamic BYAML node.</returns>
+        public dynamic SerializeByaml()
+        {
+            return new Dictionary<string, dynamic>
+            {
+                ["X"] = X,
+                ["Y"] = Y,
+                ["Z"] = Z
+            };
         }
     }
 }

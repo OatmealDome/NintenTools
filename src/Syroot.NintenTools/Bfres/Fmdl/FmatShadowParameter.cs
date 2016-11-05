@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Diagnostics;
-    using Syroot.NintenTools.IO;
+﻿using System.Diagnostics;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an shadow parameter in an FMAT subsection which describes the value to assign to a uniform shadow
     /// variable in the shader.

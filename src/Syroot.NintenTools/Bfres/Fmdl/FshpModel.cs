@@ -1,9 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using Syroot.NintenTools.IO;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an FSHP subsection in a FMDL section which describes how data in a vertex buffer is drawn.
     /// </summary>
@@ -205,8 +205,7 @@
                 {
                     node.RightNode = VisibilityNodes[node.Internal.RightNodeIndex];
                 }
-
-
+                
                 // Add the slice of visibility groups as instances to the node's list.
                 node.VisibilityGroups = new List<FshpVisibilityGroup>(node.Internal.VisibilityGroupCount);
                 for (int j = 0; j < node.Internal.VisibilityGroupCount; j++)
@@ -389,7 +388,7 @@
             }
 
             /// <summary>
-            /// Gets or sets the offset to the first <see cref="FshpVisibilityRange"/> instance.
+            /// Gets or sets the offset to the first visibility ranges.
             /// </summary>
             public BfresOffset VisibilityRangesOffset
             {
@@ -398,7 +397,7 @@
             }
 
             /// <summary>
-            /// Gets or sets the offset to the first <see cref="FshpVisibilityIndex"/> instance.
+            /// Gets or sets the offset to the first <see cref="VisibilityIndices"/> instance.
             /// </summary>
             public BfresOffset VisibilityIndicesOffset
             {

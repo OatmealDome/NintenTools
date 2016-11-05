@@ -1,0 +1,51 @@
+﻿{
+    "authors": [ "Syroot" ],
+    "copyright": "WTFPL",
+    "description": ".NET library for Nintendo file formats.",
+    "language": "en-US",
+    "name": "NintenTools",
+    "title": "NintenTools",
+    "version": "1.0.0-*",
+
+    "frameworks": {
+        "net45": {},
+        "netstandard1.6": {
+            "dependencies": {
+                "NETStandard.Library": "1.6.0",
+                "System.Dynamic.Runtime": "4.0.11"
+            },
+            "imports": "dnxcore50"
+        }
+    },
+
+    "dependencies": {
+        "Microsoft.CSharp": "4.0.0",
+        "Syroot.IO.BinaryData": "1.0.3"
+    },
+
+    "buildOptions": {
+        "debugType": "portable",
+        "optimize": true,
+        "xmlDoc": true
+    },
+
+    "scripts": {
+        "postcompile": [
+            "dotnet pack --no-build --configuration %compile:Configuration%"
+        ]
+    },
+
+    "packOptions": {
+        "iconUrl": "https://raw.githubusercontent.com/Syroot/NintenTools/master/res/Logo.png",
+        "licenseUrl": "https://raw.githubusercontent.com/Syroot/NintenTools/master/COPYING",
+        "owners": [ "Syroot" ],
+        "projectUrl": "https://github.com/Syroot/NintenTools",
+        "releaseNotes": "Initial release.",
+        "repository": {
+            "type": "git",
+            "url": "https://github.com/Syroot/NintenTools"
+        },
+        "summary": ".NET library for Nintendo file formats.",
+        "tags": [ "data", "nintendo" ]
+    }
+}

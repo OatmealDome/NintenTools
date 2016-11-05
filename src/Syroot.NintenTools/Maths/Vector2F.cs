@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Maths
-{
-    using System;
-    using System.Globalization;
+﻿using System;
+using System.Globalization;
 
+namespace Syroot.NintenTools.Maths
+{
     /// <summary>
     /// Represents a two-dimensional vector which uses float values.
     /// </summary>

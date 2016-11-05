@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres
-{
-    using System.Diagnostics;
-    using Syroot.NintenTools.IO;
+﻿using System.Diagnostics;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres
+{
     /// <summary>
     /// Represents a node in a <see cref="BfresIndexGroup"/>.
     /// </summary>

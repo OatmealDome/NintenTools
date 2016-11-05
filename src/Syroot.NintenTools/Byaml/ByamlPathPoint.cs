@@ -17,14 +17,7 @@ namespace Syroot.NintenTools.Byaml
         {
             Normal = new Vector3F(0, 1, 0);
         }
-
-        public ByamlPathPoint(Vector3F position, Vector3F normal, uint unknown)
-        {
-            Position = position;
-            Normal = normal;
-            Unknown = unknown;
-        }
-
+        
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------
 
         /// <summary>

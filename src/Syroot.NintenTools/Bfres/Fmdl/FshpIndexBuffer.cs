@@ -1,8 +1,7 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System;
-    using Syroot.NintenTools.IO;
+﻿using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an index buffer of an <see cref="FshpLodModel"/> which references indices of the elements of the
     /// corresponding <see cref="FvtxVertexBuffer"/> to draw geometry with.

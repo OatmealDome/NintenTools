@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Collections.Generic;
-    using Syroot.NintenTools.IO;
+﻿using System.Collections.Generic;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents a Level-of-Detail model of an FSHP subsection, describing the appearance of the polygon at different
     /// distances.

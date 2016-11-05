@@ -1,9 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using Syroot.NintenTools.IO;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an FMDL section in a BFRES file which contains model data.
     /// </summary>

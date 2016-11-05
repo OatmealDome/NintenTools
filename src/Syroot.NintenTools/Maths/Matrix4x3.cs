@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Maths
-{
-    using System;
-    using System.Globalization;
+﻿using System;
+using System.Globalization;
 
+namespace Syroot.NintenTools.Maths
+{
     /// <summary>
     /// Represents a matrix with 3 columns and 4 rows in row-major notation.
     /// </summary>

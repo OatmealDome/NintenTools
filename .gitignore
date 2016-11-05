@@ -212,4 +212,4 @@ _Pvt_Extensions/
 ModelManifest.xml
 
 # Manually defined
-/src/Syroot.NintenTools/Collada
+/src/Syroot.NintenTools.Test/*

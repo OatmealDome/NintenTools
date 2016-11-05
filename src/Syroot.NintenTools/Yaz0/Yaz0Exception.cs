@@ -1,13 +1,11 @@
-﻿namespace Syroot.NintenTools.Yaz0
-{
-    using System;
-    using System.Globalization;
-    using System.Runtime.Serialization;
+﻿using System;
+using System.Globalization;
 
+namespace Syroot.NintenTools.Yaz0
+{
     /// <summary>
     /// Represents an exception caused by invalid Yaz0 data.
     /// </summary>
-    [Serializable]
     public class Yaz0Exception : Exception
     {
         // ---- CONSTRUCTORS -------------------------------------------------------------------------------------------
@@ -46,21 +44,6 @@
         /// <param name="args">An object array that contains zero or more objects to format.</param>
         public Yaz0Exception(string format, params object[] args)
             : base(string.Format(CultureInfo.CurrentCulture, format, args))
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Yaz0Exception"/> class with serialized data.
-        /// </summary>
-        /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the
-        /// exception being thrown.</param>
-        /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the
-        /// source or destination.</param>
-        /// <exception cref="ArgumentNullException">The info parameter is null.</exception>
-        /// <exception cref="SerializationException">The class name is null or <see cref="Exception.HResult"/> is zero
-        /// (0).</exception>
-        protected Yaz0Exception(SerializationInfo info, StreamingContext context)
-            : base(info, context)
         {
         }
     }

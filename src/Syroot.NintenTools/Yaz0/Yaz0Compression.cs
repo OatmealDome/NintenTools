@@ -1,9 +1,8 @@
-﻿namespace Syroot.NintenTools.Yaz0
-{
-    using System.IO;
-    using Syroot.IO;
-    using Syroot.NintenTools.IO;
+﻿using System.IO;
+using Syroot.IO;
 
+namespace Syroot.NintenTools.Yaz0
+{
     /// <summary>
     /// Represents a collection of methods to decompress Yaz0-compressed data.
     /// </summary>

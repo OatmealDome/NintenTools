@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace Syroot.NintenTools.Byaml
 {
     /// <summary>
     /// Represents errors that occur when trying to process invalid <see cref="ByamlFile"/> data.
     /// </summary>
-    [Serializable]
     public class ByamlException : Exception
     {
         // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
@@ -37,18 +35,6 @@ namespace Syroot.NintenTools.Byaml
         /// inner exception is specified.</param>
         public ByamlException(string message, Exception inner)
             : base(message, inner)
-        {
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ByamlException"/> class with serialized data.
-        /// </summary>
-        /// <param name="info">The <see cref="SerializationInfo"/> that holds the serialized object data about the
-        /// exception being thrown.</param>
-        /// <param name="context">The <see cref="StreamingContext"/> that contains contextual information about the
-        /// source or destination.</param>
-        protected ByamlException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
         {
         }
     }

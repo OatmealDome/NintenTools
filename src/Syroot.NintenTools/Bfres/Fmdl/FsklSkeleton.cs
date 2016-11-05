@@ -1,9 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Collections.Generic;
-    using Syroot.NintenTools.IO;
-    using Syroot.NintenTools.Maths;
+﻿using System.Collections.Generic;
+using Syroot.NintenTools.IO;
+using Syroot.NintenTools.Maths;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an FSKL subsection in a FMDL section which describes a models armature consisting out of bones.
     /// </summary>

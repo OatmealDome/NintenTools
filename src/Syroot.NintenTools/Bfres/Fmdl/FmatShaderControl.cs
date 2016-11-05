@@ -1,9 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System;
-    using System.Collections.Generic;
-    using Syroot.NintenTools.IO;
+﻿using System;
+using System.Collections.Generic;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents the shader control structure in an FMAT subsection, describing how a shader is used by the material.
     /// </summary>
@@ -24,7 +24,7 @@
         // ---- PROPERTIES ---------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Gets or sets internal data not required to edit a <see cref="XXXX"/> instance.
+        /// Gets or sets internal data not required to edit a <see cref="FmatShaderControl"/> instance.
         /// </summary>
         public Internals Internal
         {

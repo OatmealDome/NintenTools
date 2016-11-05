@@ -1,9 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Diagnostics;
-    using Syroot.NintenTools.IO;
-    using Syroot.NintenTools.Maths;
+﻿using System.Diagnostics;
+using Syroot.NintenTools.IO;
+using Syroot.NintenTools.Maths;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents a single bone of a <see cref="FsklSkeleton"/>.
     /// </summary>

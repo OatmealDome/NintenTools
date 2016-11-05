@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres.Ftex
-{
-    using Syroot.NintenTools.Bfres.Gx2;
-    using Syroot.NintenTools.IO;
+﻿using Syroot.NintenTools.Bfres.Gx2;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Ftex
+{
     /// <summary>
     /// Represents an FTEX section in a BFRES file which describes texture data.
     /// </summary>
@@ -112,6 +112,9 @@
             set;
         }
         
+        /// <summary>
+        /// Gets or sets the swizzle mode used by the texture data.
+        /// </summary>
         public uint Swizzle
         {
             get;

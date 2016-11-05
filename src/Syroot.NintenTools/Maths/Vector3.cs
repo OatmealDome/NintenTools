@@ -1,12 +1,12 @@
-﻿namespace Syroot.NintenTools.Maths
-{
-    using System;
-    using System.Globalization;
+﻿using System;
+using System.Globalization;
 
+namespace Syroot.NintenTools.Maths
+{
     /// <summary>
     /// Represents a three-dimensional vector which uses integer values.
     /// </summary>
-    public struct Vector3 : IEquatable<Vector3>, IEquatableByRef<Vector3>
+    public struct Vector3 : IEquatable<Vector3>, IEquatableByRef<Vector3>, IComparable
     {
         // ---- CONSTANTS ----------------------------------------------------------------------------------------------
 
@@ -175,6 +175,30 @@
             return !a.Equals(ref b);
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the components of the first specified <see cref="Vector3"/> are bigger than
+        /// the components of the second specified <see cref="Vector3"/>.
+        /// </summary>
+        /// <param name="a">The first <see cref="Vector3"/> to compare.</param>
+        /// <param name="b">The second <see cref="Vector3"/> to compare.</param>
+        /// <returns>true, if the components of the first <see cref="Vector3"/> are bigger than the second.</returns>
+        public static bool operator >(Vector3 a, Vector3 b)
+        {
+            return a.X > b.X && a.Y > b.X && a.Z > b.Z;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the components of the first specified <see cref="Vector3"/> are smaller
+        /// than the components of the second specified <see cref="Vector3"/>.
+        /// </summary>
+        /// <param name="a">The first <see cref="Vector3"/> to compare.</param>
+        /// <param name="b">The second <see cref="Vector3"/> to compare.</param>
+        /// <returns>true, if the components of the first <see cref="Vector3"/> are smaller than the second.</returns>
+        public static bool operator <(Vector3 a, Vector3 b)
+        {
+            return a.X < b.X && a.Y < b.X && a.Z < b.Z;
+        }
+
         // ---- METHODS (PUBLIC) ---------------------------------------------------------------------------------------
 
         /// <summary>
@@ -239,6 +263,27 @@
         public bool Equals(ref Vector3 other)
         {
             return X == other.X && Y == other.Y && Z == other.Z;
+        }
+
+        /// <summary>
+        /// Compares the current instance with another <see cref="Vector3"/> and returns an integer that indicates
+        /// whether the current instance precedes, follows, or occurs in the same position in the sort order as the
+        /// other object.
+        /// </summary>
+        /// <param name="obj">An object to compare with this instance.</param>
+        /// <returns>A value that indicates the relative order of the <see cref="Vector3"/> instances being compared.
+        /// </returns>
+        public int CompareTo(object obj)
+        {
+            Vector3? other = obj as Vector3?;
+            if (other.HasValue)
+            {
+                return this > other ? 1 : this < other ? -1 : 0;
+            }
+            else
+            {
+                throw new ArgumentException($"{nameof(obj)} must be a {nameof(Vector3)}.", nameof(obj));
+            }
         }
     }
 }

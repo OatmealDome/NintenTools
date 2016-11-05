@@ -1,9 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres
-{
-    using System.Collections.Generic;
-    using Syroot.IO;
-    using Syroot.NintenTools.IO;
+﻿using System.Collections.Generic;
+using Syroot.IO;
 
+namespace Syroot.NintenTools.Bfres
+{
     /// <summary>
     /// Represents a set of properties controlling the load of a <see cref="Bfres.BfresFile"/>.
     /// </summary>

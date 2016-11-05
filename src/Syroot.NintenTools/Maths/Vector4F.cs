@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Maths
-{
-    using System;
-    using System.Globalization;
+﻿using System;
+using System.Globalization;
 
+namespace Syroot.NintenTools.Maths
+{
     /// <summary>
     /// Represents a four-dimensional vector which uses float values.
     /// </summary>

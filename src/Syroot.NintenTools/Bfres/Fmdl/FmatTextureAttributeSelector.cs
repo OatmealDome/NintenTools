@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Diagnostics;
-    using Syroot.NintenTools.IO;
+﻿using System.Diagnostics;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an attribute in an FMAT subsection, describing how a texture is passed to the pixel shader input.
     /// </summary>

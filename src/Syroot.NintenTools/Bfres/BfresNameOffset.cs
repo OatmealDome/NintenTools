@@ -1,10 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres
-{
-    using System.Diagnostics;
-    using System.IO;
-    using Syroot.IO;
-    using Syroot.NintenTools.IO;
+﻿using System.Diagnostics;
+using System.IO;
+using Syroot.IO;
 
+namespace Syroot.NintenTools.Bfres
+{
     /// <summary>
     /// Represents an offset in a BFRES file pointing to a string in the string table. As offset values in a BFRES file
     /// are relative to themselves, this struct provides an easy way to compute the total offset relative to the

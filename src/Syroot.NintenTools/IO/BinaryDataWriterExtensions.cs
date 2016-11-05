@@ -1,9 +1,8 @@
-﻿namespace Syroot.NintenTools.IO
-{
-    using Syroot.IO;
-    using Syroot.NintenTools.Bfres;
-    using Syroot.NintenTools.Maths;
+﻿using Syroot.IO;
+using Syroot.NintenTools.Maths;
 
+namespace Syroot.NintenTools.IO
+{   
     /// <summary>
     /// Represents a set of extension methods for the <see cref="BinaryDataWriter"/> class.
     /// </summary>

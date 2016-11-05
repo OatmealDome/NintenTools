@@ -1,8 +1,7 @@
-﻿namespace Syroot.NintenTools.Bfres.Fshu
-{
-    using Syroot.IO;
-    using Syroot.NintenTools.IO;
+﻿using Syroot.IO;
 
+namespace Syroot.NintenTools.Bfres.Fshu
+{
     /// <summary>
     /// Represents an FSHU section in a BFRES file.
     /// </summary>
@@ -15,7 +14,7 @@
         /// The stream of the file has to be positioned at the beginning of the data. Since FSHU sections can
         /// originate from different index group in a BFRES files, the additional parameter specifies this group.
         /// </summary>
-        /// <param name="bfresFile">The BFRES file providing the context.</param>
+        /// <param name="reader">The <see cref="BinaryDataReader"/> providing the data.</param>
         /// <param name="group">The group from which the section originates from.</param>
         internal FshuSection(BinaryDataReader reader, int group)
         {

@@ -1,11 +1,11 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System;
-    using System.Diagnostics;
-    using Syroot.IO;
-    using Syroot.NintenTools.IO;
-    using Syroot.NintenTools.Maths;
+﻿using System;
+using System.Diagnostics;
+using Syroot.IO;
+using Syroot.NintenTools.IO;
+using Syroot.NintenTools.Maths;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents a material parameter in an FMAT subsection, describing how a value is passed to a uniform variable in
     /// shader code.

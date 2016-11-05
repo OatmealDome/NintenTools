@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Diagnostics;
-    using Syroot.NintenTools.IO;
+﻿using System.Diagnostics;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents a generic parameter referenced by a FMDL section which describes arbitrary model parameters.
     /// </summary>

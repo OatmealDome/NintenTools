@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Collections.Generic;
-    using Syroot.NintenTools.IO;
+﻿using System.Collections.Generic;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents an FVTX subsection in a FMDL section which describes the raw vertex data of a polygon.
     /// </summary>

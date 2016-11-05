@@ -1,9 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System.Diagnostics;
-    using Syroot.NintenTools.Bfres.Ftex;
-    using Syroot.NintenTools.IO;
+﻿using System.Diagnostics;
+using Syroot.NintenTools.Bfres.Ftex;
+using Syroot.NintenTools.IO;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents a texture selector in an FMAT subsection, describing the name and offset of the texture to reference.
     /// </summary>
@@ -43,7 +43,7 @@
         }
 
         /// <summary>
-        /// Gets or sets the referenced <see cref="FtexTexture"/> instance.
+        /// Gets or sets the referenced <see cref="FtexSection"/> instance.
         /// </summary>
         public FtexSection Texture
         {

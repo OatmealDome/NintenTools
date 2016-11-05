@@ -54,7 +54,7 @@ namespace Syroot.NintenTools.Byaml
         /// Serializes the given dynamic value which requires to be an array or dictionary of BYAML compatible values
         /// and stores it in the given file.
         /// </summary>
-        /// <param name="stream">The name of the file to store the data in.</param>
+        /// <param name="fileName">The name of the file to store the data in.</param>
         /// <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
         /// BYAML compatible values.</param>
         public static void Save(string fileName, dynamic root)
@@ -146,7 +146,7 @@ namespace Syroot.NintenTools.Byaml
 
         /// <summary>
         /// Calls the <see cref="IByamlSerializable.SerializeByaml()"/> method implemented by <typeparamref name="T"/>
-        /// and returns the dynamic array node representing the given <typeparamref name="list"/>. If the node is
+        /// and returns the dynamic array node representing the given <typeparamref name="T"/>. If the node is
         /// <c>null</c>, <c>null</c> is returned.
         /// </summary>
         /// <typeparam name="T">The type which implements <see cref="IByamlSerializable"/>.</typeparam>
@@ -163,7 +163,7 @@ namespace Syroot.NintenTools.Byaml
         private dynamic Read(Stream stream)
         {
             // Open a reader on the given stream.
-            using (BinaryDataReader reader = new BinaryDataReader(stream, Encoding.ASCII, true))
+            using (BinaryDataReader reader = new BinaryDataReader(stream, Encoding.GetEncoding(20127), true))
             {
                 reader.ByteOrder = ByteOrder.BigEndian;
 
@@ -373,7 +373,7 @@ namespace Syroot.NintenTools.Byaml
             _stringArray.Sort(StringComparer.Ordinal);
 
             // Open a writer on the given stream.
-            using (BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.ASCII, true))
+            using (BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.GetEncoding(20127), true))
             {
                 writer.ByteOrder = ByteOrder.BigEndian;
 

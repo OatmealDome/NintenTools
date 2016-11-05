@@ -1,8 +1,8 @@
-﻿namespace Syroot.NintenTools.Maths
-{
-    using System;
-    using System.Globalization;
+﻿using System;
+using System.Globalization;
 
+namespace Syroot.NintenTools.Maths
+{
     /// <summary>
     /// Represents a matrix with 3 columns and 2 rows in row-major notation.
     /// </summary>
@@ -78,8 +78,8 @@
         // ---- OPERATORS ----------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Gets a value indicating whether the components of Matrix4 first specified <see cref="Matrix2x3"/> are the same
-        /// as the components of the second specified <see cref="Color"/>.
+        /// Gets a value indicating whether the components of Matrix4 first specified <see cref="Matrix2x3"/> are the
+        /// same as the components of the second specified <see cref="Matrix2x3"/>.
         /// </summary>
         /// <param name="a">The first <see cref="Matrix2x3"/> to compare.</param>
         /// <param name="b">The second <see cref="Matrix2x3"/> to compare.</param>

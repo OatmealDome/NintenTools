@@ -1,9 +1,9 @@
-﻿namespace Syroot.NintenTools.Bfres.Fmdl
-{
-    using System;
-    using System.Collections.Generic;
-    using Syroot.NintenTools.Maths;
+﻿using System;
+using System.Collections.Generic;
+using Syroot.NintenTools.Maths;
 
+namespace Syroot.NintenTools.Bfres.Fmdl
+{
     /// <summary>
     /// Represents a node in the visibility group binary tree of a <see cref="FmdlSection"/>.
     /// </summary>
