@@ -5,7 +5,7 @@
     "language": "en-US",
     "name": "Syroot.NintenTools",
     "title": "NintenTools",
-    "version": "1.0.0-*",
+    "version": "1.0.1-*",
 
     "frameworks": {
         "net45": {},
@@ -40,12 +40,12 @@
         "licenseUrl": "https://raw.githubusercontent.com/Syroot/NintenTools/master/COPYING",
         "owners": [ "Syroot" ],
         "projectUrl": "https://github.com/Syroot/NintenTools",
-        "releaseNotes": "Initial release.",
+        "releaseNotes": "Fixed issues when saving new BYAML files.",
         "repository": {
             "type": "git",
             "url": "https://github.com/Syroot/NintenTools"
         },
         "summary": ".NET library for Nintendo file formats.",
-        "tags": [ "data", "nintendo" ]
+        "tags": [ "bfres", "byaml", "nintendo", "szs", "yaz0" ]
     }
 }

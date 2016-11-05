@@ -10,10 +10,11 @@ namespace Syroot.NintenTools.Byaml
         // ---- CONSTRUCTORS & DESTRUCTOR ------------------------------------------------------------------------------
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ByamlException"/> class.
+        /// Initializes a new instance of the <see cref="ByamlException"/> class with an error message about an
+        /// incompatible specified <paramref name="type"/>.
         /// </summary>
-        public ByamlException(dynamic value)
-            : base($"The type of {value} is not supported by BYAML.")
+        public ByamlException(Type type)
+            : this($"Type '{type}' is not supported by BYAML.")
         {
         }
 
