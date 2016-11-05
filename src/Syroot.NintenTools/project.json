@@ -3,7 +3,7 @@
     "copyright": "WTFPL",
     "description": ".NET library for Nintendo file formats.",
     "language": "en-US",
-    "name": "NintenTools",
+    "name": "Syroot.NintenTools",
     "title": "NintenTools",
     "version": "1.0.0-*",
 
