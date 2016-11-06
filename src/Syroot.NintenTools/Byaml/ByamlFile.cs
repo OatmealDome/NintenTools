@@ -126,6 +126,25 @@ namespace Syroot.NintenTools.Byaml
         }
 
         /// <summary>
+        /// Creates a new instance of <typeparamref name="T"/> and then calls its implementation of the
+        /// <see cref="IByamlSerializable.DeserializeByaml(dynamic)"/> method for the given <paramref name="node"/> and
+        /// returns the instance. If the node is <c>null</c>, <c>null</c> is returned.
+        /// </summary>
+        /// <typeparam name="T">The type which implements <see cref="IByamlSerializable"/>.</typeparam>
+        /// <param name="node">The node which will be deserialized.</param>
+        /// <returns>The deserialized instance of type <typeparamref name="T"/> or <c>null</c> if the node is
+        /// <c>null</c>.</returns>
+        public static T Deserialize<T>(dynamic node)
+            where T : IByamlSerializable, new()
+        {
+            if (node == null) return default(T);
+
+            T instance = new T();
+            instance.DeserializeByaml(node);
+            return instance;
+        }
+        
+        /// <summary>
         /// Calls the <see cref="IByamlSerializable.DeserializeByaml(dynamic)"/> method implemented by
         /// <typeparamref name="T"/> on each element in the given array <paramref name="node"/> and returns the typed
         /// list. If the node is <c>null</c>, <c>null</c> is returned.
@@ -139,15 +158,13 @@ namespace Syroot.NintenTools.Byaml
         {
             return node?.Select(x =>
             {
-                T element = new T();
-                element.DeserializeByaml(x);
-                return element;
+                return (T)Deserialize<T>(x);
             }).ToList();
         }
 
         /// <summary>
         /// Calls the <see cref="IByamlSerializable.SerializeByaml()"/> method implemented by <typeparamref name="T"/>
-        /// and returns the dynamic array node representing the given <typeparamref name="T"/>. If the node is
+        /// and returns the dynamic array node representing the given <typeparamref name="T"/>. If the list is
         /// <c>null</c>, <c>null</c> is returned.
         /// </summary>
         /// <typeparam name="T">The type which implements <see cref="IByamlSerializable"/>.</typeparam>

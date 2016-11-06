@@ -5,7 +5,7 @@
     "language": "en-US",
     "name": "Syroot.NintenTools",
     "title": "NintenTools",
-    "version": "1.0.1-*",
+    "version": "1.0.3-*",
 
     "frameworks": {
         "net45": {},
@@ -40,7 +40,7 @@
         "licenseUrl": "https://raw.githubusercontent.com/Syroot/NintenTools/master/COPYING",
         "owners": [ "Syroot" ],
         "projectUrl": "https://github.com/Syroot/NintenTools",
-        "releaseNotes": "Fixed issues when saving new BYAML files.",
+        "releaseNotes": "Added additional helper methods to the ByamlFile class.",
         "repository": {
             "type": "git",
             "url": "https://github.com/Syroot/NintenTools"
