@@ -121,12 +121,18 @@ namespace Syroot.NintenTools.Bfres.Ftex
             set;
         }
 
+        /// <summary>
+        /// The alignment of the texture data.
+        /// </summary>
         public uint Alignment
         {
             get;
             set;
         }
 
+        /// <summary>wwww
+        /// The pitch of the texture data.
+        /// </summary>
         public uint Pitch
         {
             get;

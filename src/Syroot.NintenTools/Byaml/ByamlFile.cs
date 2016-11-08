@@ -140,8 +140,7 @@ namespace Syroot.NintenTools.Byaml
             if (node == null) return default(T);
 
             T instance = new T();
-            instance.DeserializeByaml(node);
-            return instance;
+            return instance.DeserializeByaml(node);
         }
         
         /// <summary>

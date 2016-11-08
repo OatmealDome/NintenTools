@@ -1,4 +1,6 @@
-﻿namespace Syroot.NintenTools.Bfres.Gx2
+﻿#pragma warning disable CS1591
+
+namespace Syroot.NintenTools.Bfres.Gx2
 {
     // This file contains definitions originating from gx2Enum.h, converted into C#.
 
@@ -233,3 +235,5 @@
         EightSamples = 3
     }
 }
+
+#pragma warning restore CS1591

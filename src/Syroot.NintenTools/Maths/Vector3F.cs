@@ -338,11 +338,12 @@ namespace Syroot.NintenTools.Maths
         /// Reads the data from the given dynamic BYAML node into the instance.
         /// </summary>
         /// <param name="node">The dynamic BYAML node to deserialize.</param>
-        public void DeserializeByaml(dynamic node)
+        public dynamic DeserializeByaml(dynamic node)
         {
             X = node["X"];
             Y = node["Y"];
             Z = node["Z"];
+            return this;
         }
 
         /// <summary>
