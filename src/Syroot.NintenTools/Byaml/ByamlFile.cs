@@ -169,7 +169,7 @@ namespace Syroot.NintenTools.Byaml
         /// <typeparam name="T">The type which implements <see cref="IByamlSerializable"/>.</typeparam>
         /// <param name="list">The list which elements will be serialized.</param>
         /// <returns>The dynamic array node or <c>null</c> if the list is <c>null</c>.</returns>
-        public static IEnumerable<dynamic> SerializeList<T>(List<T> list)
+        public static IEnumerable<dynamic> SerializeList<T>(IEnumerable<T> list)
             where T : IByamlSerializable
         {
             return list?.Select(x => x.SerializeByaml());
