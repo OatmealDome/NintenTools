@@ -11,6 +11,7 @@
         /// Reads the data from the given dynamic BYAML node into the instance.
         /// </summary>
         /// <param name="node">The dynamic BYAML node to deserialize.</param>
+        /// <returns>The instance itself.</returns>
         dynamic DeserializeByaml(dynamic node);
 
         /// <summary>
