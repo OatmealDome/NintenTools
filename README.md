@@ -4,6 +4,8 @@ This is a collection of .NET libraries and tools to handle typical Nintendo file
 
 Most specifically, the BFRES file format is focused, based on the documentation of the Custom Mario Kart 8 Wiki and own research.
 
+The library is available as a [NuGet package](https://www.nuget.org/packages/Syroot.NintenTools).
+
 Usage
 =====
 
