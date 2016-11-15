@@ -58,6 +58,23 @@ namespace Syroot.NintenTools.Byaml
         /// <param name="fileName">The name of the file to store the data in.</param>
         /// <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
         /// BYAML compatible values.</param>
+        /// <param name="includePathArray">Whether to include a path array offset in this BYAML. For Splatoon BYAMLs,
+        /// this must be turned off.</param>
+        public static void Save(string fileName, dynamic root, bool includePathArray)
+        {
+            using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                Save(stream, root, includePathArray);
+            }
+        }
+
+        /// <summary>
+        /// Serializes the given dynamic value which requires to be an array or dictionary of BYAML compatible values
+        /// and stores it in the given file. The saved BYAML will have a path array offset included.
+        /// </summary>
+        /// <param name="fileName">The name of the file to store the data in.</param>
+        /// <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
+        /// BYAML compatible values.</param>
         public static void Save(string fileName, dynamic root)
         {
             using (FileStream stream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -73,10 +90,25 @@ namespace Syroot.NintenTools.Byaml
         /// <param name="stream">The <see cref="Stream"/> to store the data in.</param>
         /// <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
         /// BYAML compatible values.</param>
+        /// <param name="includePathArray">Whether to include a path array offset in this BYAML. For Splatoon BYAMLs,
+        /// this must be turned off.</param>
+        public static void Save(Stream stream, dynamic root, bool includePathArray)
+        {
+            ByamlFile byamlFile = new ByamlFile();
+            byamlFile.Write(stream, root, includePathArray);
+        }
+
+        /// <summary>
+        /// Serializes the given dynamic value which requires to be an array or dictionary of BYAML compatible values
+        /// and stores it in the specified stream. The saved BYAML will have a path array offset included.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> to store the data in.</param>
+        /// <param name="root">The dynamic value becoming the root of the BYAML file. Must be an array or dictionary of
+        /// BYAML compatible values.</param>
         public static void Save(Stream stream, dynamic root)
         {
             ByamlFile byamlFile = new ByamlFile();
-            byamlFile.Write(stream, root);
+            byamlFile.Write(stream, root, true);
         }
 
         // ---- Helper methods ----
@@ -189,8 +221,8 @@ namespace Syroot.NintenTools.Byaml
                 if (reader.ReadUInt16() != 0x0001) throw new ByamlException("Unsupported BYAML version.");
                 uint nameArrayOffset = reader.ReadUInt32();
                 uint stringArrayOffset = reader.ReadUInt32();
-                uint pathArrayOffset = reader.ReadUInt32();
-                uint rootOffset = reader.ReadUInt32();
+                uint offsetThree = reader.ReadUInt32();
+                uint offsetFour = reader.ReadUInt32();
 
                 // Read the name array, holding strings referenced by index for the names of other nodes.
                 reader.Seek(nameArrayOffset, SeekOrigin.Begin);
@@ -203,16 +235,26 @@ namespace Syroot.NintenTools.Byaml
                     _stringArray = ReadNode(reader);
                 }
 
-                // Read the optional path array, holding paths referenced by index in path nodes.
-                if (pathArrayOffset != 0)
+                // Check if this is a Splatoon BYAML, which has no path array offset.
+                if (offsetFour >= reader.Length)
                 {
-                    reader.Seek(pathArrayOffset, SeekOrigin.Begin);
-                    _pathArray = ReadNode(reader);
+                    // The third offset is the root node, so just read that and we're done.
+                    reader.Seek(offsetThree, SeekOrigin.Begin);
+                    return ReadNode(reader);
                 }
+                else
+                {
+                    // Read the optional path array, holding paths referenced by index in path nodes.
+                    if (offsetThree != 0)
+                    {
+                        reader.Seek(offsetThree, SeekOrigin.Begin);
+                        _pathArray = ReadNode(reader);
+                    }
 
-                // Read the root node.
-                reader.Seek(rootOffset, SeekOrigin.Begin);
-                return ReadNode(reader);
+                    // Read the root node.
+                    reader.Seek(offsetFour, SeekOrigin.Begin);
+                    return ReadNode(reader);
+                }
             }
         }
 
@@ -280,6 +322,9 @@ namespace Syroot.NintenTools.Byaml
                         return reader.ReadInt32();
                     case ByamlNodeType.Float:
                         return reader.ReadSingle();
+                    case ByamlNodeType.Null:
+                        reader.Seek(0x4);
+                        return null;
                     default:
                         throw new ByamlException($"Unknown node type '{nodeType}'.");
                 }
@@ -379,7 +424,7 @@ namespace Syroot.NintenTools.Byaml
             return point;
         }
 
-        private void Write(Stream stream, object root)
+        private void Write(Stream stream, object root, bool includePathArray)
         {
             // Check if the root is of the correct type.
             if (root == null)
@@ -409,8 +454,8 @@ namespace Syroot.NintenTools.Byaml
                 writer.Write((short)0x0001);
                 Offset nameArrayOffset = writer.ReserveOffset();
                 Offset stringArrayOffset = writer.ReserveOffset();
-                Offset pathArrayOffset = writer.ReserveOffset();
-                Offset rootOffset = writer.ReserveOffset();
+                Offset offsetThree = writer.ReserveOffset();
+                Offset offsetFour = (includePathArray) ? writer.ReserveOffset() : null;
 
                 // Write the main nodes.
                 WriteValueContents(writer, nameArrayOffset, ByamlNodeType.StringArray, _nameArray);
@@ -422,17 +467,27 @@ namespace Syroot.NintenTools.Byaml
                 {
                     WriteValueContents(writer, stringArrayOffset, ByamlNodeType.StringArray, _stringArray);
                 }
-                if (_pathArray.Count == 0)
+
+                // Don't include a path array offset if requested.
+                if (!includePathArray)
                 {
-                    writer.Write(0);
+                    // Write the root node.
+                    WriteValueContents(writer, offsetThree, GetNodeType(root), root);
                 }
                 else
                 {
-                    WriteValueContents(writer, pathArrayOffset, ByamlNodeType.PathArray, _pathArray);
-                }
+                    if (_pathArray.Count == 0)
+                    {
+                        writer.Write(0);
+                    }
+                    else
+                    {
+                        WriteValueContents(writer, offsetThree, ByamlNodeType.PathArray, _pathArray);
+                    }
 
-                // Write the root node.
-                WriteValueContents(writer, rootOffset, GetNodeType(root), root);
+                    // Write the root node.
+                    WriteValueContents(writer, offsetFour, GetNodeType(root), root);
+                }
             }
         }
 
@@ -490,6 +545,9 @@ namespace Syroot.NintenTools.Byaml
                 case ByamlNodeType.Integer:
                 case ByamlNodeType.Float:
                     writer.Write(value);
+                    return null;
+                case ByamlNodeType.Null:
+                    writer.Write(0x0);
                     return null;
                 default:
                     throw new ByamlException($"{type} not supported as value node.");
@@ -676,6 +734,7 @@ namespace Syroot.NintenTools.Byaml
                 else if (node is bool) return ByamlNodeType.Boolean;
                 else if (node is int) return ByamlNodeType.Integer;
                 else if (node is float) return ByamlNodeType.Float;
+                else if (node == null) return ByamlNodeType.Null;
                 else throw new ByamlException($"Type '{node.GetType()}' is not supported as a BYAML node.");
             }
         }
