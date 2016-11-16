@@ -212,7 +212,7 @@ namespace Syroot.NintenTools.Byaml
         private dynamic Read(Stream stream)
         {
             // Open a reader on the given stream.
-            using (BinaryDataReader reader = new BinaryDataReader(stream, Encoding.ASCII, true))
+            using (BinaryDataReader reader = new BinaryDataReader(stream, Encoding.UTF8, true))
             {
                 reader.ByteOrder = ByteOrder.BigEndian;
 
@@ -445,7 +445,7 @@ namespace Syroot.NintenTools.Byaml
             _stringArray.Sort(StringComparer.Ordinal);
 
             // Open a writer on the given stream.
-            using (BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.ASCII, true))
+            using (BinaryDataWriter writer = new BinaryDataWriter(stream, Encoding.UTF8, true))
             {
                 writer.ByteOrder = ByteOrder.BigEndian;
 
